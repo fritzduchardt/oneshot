@@ -1,0 +1,124 @@
+#! python3
+import json
+import logging
+import os
+import sys
+from typing import List
+
+import typer
+
+import ai_utils
+from collector import collector as c
+from generator import generator
+from pattern import pattern as p
+from pattern import render
+
+log_level = os.environ.get('LOG_LEVEL', 'INFO').upper()
+logging.basicConfig(
+    level=log_level,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+
+oneshot = typer.Typer(help="Oneshot AI CLI")
+shoot = typer.Typer(help="Shoot query against the AI")
+pattern = typer.Typer(help="Manage your pattern files")
+models = typer.Typer(help="Manage API Models")
+collect = typer.Typer(help="Collect files to be handed to the AI")
+list_patterns = typer.Typer(help="List pattern files")
+list_models = typer.Typer(help="List Model names")
+generate_patterns = typer.Typer(help="Generate Fabric pattern files with gomplate")
+oneshot.add_typer(shoot)
+oneshot.add_typer(collect)
+oneshot.add_typer(pattern, name="patterns")
+oneshot.add_typer(models, name="models")
+pattern.add_typer(list_patterns)
+pattern.add_typer(generate_patterns)
+models.add_typer(list_models)
+
+@shoot.command()
+def shoot(
+    pattern_name: str = typer.Option("general", "--pattern", "-p", help="Predefined prompt pattern"),
+    pattern_dir: str = typer.Option("", "--pattern-dir", help="Directory where prompt patterns are located", envvar="OS_PATTERN_DIR"),
+    env_file: str = typer.Option("", "--env-file", help="Path to file with env vars with API credentials in Fabric format", envvar="OS_ENV_FILE"),
+    mcp_url: str = typer.Option("", "--mcp-url", "-u", help="MCP server url", envvar="MCP_URL"),
+    output_to_disk: bool = typer.Option(False, "--output-to-disk", "-o", help="Write LLM output back to disk"),
+    model: str = typer.Option(..., "--model", "-m", help="LLM model to use", envvar="DEFAULT_MODEL"),
+    read_stdin: bool = typer.Option(False, "--stdin", "-s", help="Read input from stdin"),
+    prompt: List[str] = typer.Argument([], help="User prompt")
+):
+    if env_file == "":
+        env_file = os.getenv("OS_CONFIG_ENV_FILE")
+    if pattern_dir == "":
+        pattern_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
+
+    stdin = ""
+    if read_stdin:
+        data = sys.stdin.buffer.read()
+        stdin = data.decode("utf-8", errors="replace")
+
+    prompt_str = ""
+    if prompt:
+        prompt_str = " ".join(prompt)
+
+    llm_resp = ai_utils.complete(env_file, pattern_dir, pattern_name, stdin, prompt_str, model, mcp_url)
+
+    if output_to_disk:
+        generator.write_to_disk(llm_resp)
+    else:
+        sys.stdout.reconfigure(encoding="utf-8")
+        print(llm_resp)
+
+@collect.command()
+def collect(
+        collect_dir: str = typer.Argument(".", help="Collect directory or regex"),
+        include_hidden: bool = typer.Option(False, "--hidden", "-H", help="Include hidden files in collection"),
+        num_threads: int = typer.Option(1, "--threads", "-t", help="Number of concurrent threads for operation")
+):
+    if num_threads > 1:
+        logging.debug(f"Running with {num_threads} threads")
+        c.collect_files_async(collect_dir, include_hidden, num_threads)
+    else:
+        logging.debug("Running single threaded")
+        c.collect_files(collect_dir, include_hidden)
+
+@list_patterns.command(name="list")
+def list_patterns(
+        pattern_dir: str = typer.Option("", "--pattern-dir", help="Directory where prompt patterns are located", envvar="OS_PATTERN_DIR"),
+):
+    pattern_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
+    logging.info(f"Listing patterns in: {pattern_dir}")
+    patterns = p.list_patterns(pattern_dir)
+    print(json.dumps(patterns))
+
+@generate_patterns.command(name="generate")
+def generate_patterns(
+        output_dir: str = typer.Option(
+            ...,
+            "--output-dir", "-o",
+            help="Output directory for generated pattern files"
+        ),
+        pattern_template_dir: List[str] = typer.Option(
+            ...,
+            "--template-dir", "-t",
+            help="Template directories with Fabric pattern templates to process (can be used multiple times)"
+        )
+):
+    if not os.path.exists(output_dir):
+        logging.error(f"Output dir does not exist: {output_dir}")
+        return
+
+    render.render_jinja2_templates(output_dir, pattern_template_dir)
+
+
+@list_models.command(name="list")
+def list_models(
+        env_file: str = typer.Option("", "--env-file", help="Path to file with env vars with API credentials in Fabric format", envvar="OS_ENV_FILE"),
+):
+    if not env_file:
+        env_file = os.getenv("OS_CONFIG_ENV_FILE")
+
+    print(json.dumps(ai_utils.list_models(env_file)))
+
+if __name__ == "__main__":
+    oneshot()

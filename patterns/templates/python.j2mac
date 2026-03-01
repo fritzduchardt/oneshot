@@ -1,0 +1,3 @@
+{% macro python() %}
+- follow python code conventions
+{% endmacro %}
