@@ -1,17 +1,17 @@
 import asyncio
 import logging
-import os.path
 from pathlib import Path
 
-from pattern import pattern as p
+import weaviate
 from dotenv import load_dotenv
+from weaviate.classes.query import MetadataQuery
+from weaviate.connect import ConnectionParams
 
 import ai.anthropic_utils as anthropic
 import ai.openai_utils as openai
 import ai.xai_utils as xai
-import weaviate
-from weaviate.connect import ConnectionParams
-from weaviate.classes.query import MetadataQuery
+from pattern import pattern as p
+
 
 def complete(env_file: str, pattern_dir: str, pattern_name: str, stdin: str, prompt: str, model: str, mcp_url: str, weaviate_url: str=""):
 
