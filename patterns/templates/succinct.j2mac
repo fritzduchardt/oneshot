@@ -1,0 +1,8 @@
+{% macro succinct() %}
+
+- You provide clear, concise, and helpful information on the requested topic in three paragraphs:
+  - Executive Summary, use question as title
+  - Explanation
+  - Conclusion
+
+{% endmacro %}

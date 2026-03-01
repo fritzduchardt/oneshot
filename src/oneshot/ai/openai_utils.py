@@ -67,6 +67,14 @@ async def call_openai_with_tools(mcp_url: str, model: str, pattern: str, prompt:
                         "call_id": item.call_id,
                         "output": result.content[0].text
                     })
+                if item.type == "message":
+                    if item.content:
+                        final_text.append(item.content[0].text)
+                        return "\n".join(final_text)
+                else:
+                    final_text.append("Failure to call mcp")
+                    return "\n".join(final_text)
+
 
             # Second call to LLM with tool results
             response = client.responses.create(
@@ -92,7 +100,7 @@ def create_client() -> OpenAI:
 def create_messages(pattern: str, prompt: str):
     return [
         {
-            "role": "assistant",
+            "role": "system",
             "content": pattern,
         },
         {
