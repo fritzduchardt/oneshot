@@ -5,21 +5,6 @@ from pathlib import Path
 import ai_utils
 
 from flask import Flask, request
-
-# curl localhost:8080/patterns/names
-# curl localhost:8080/chat
-# const prompt: [{
-#         userInput: text,
-#         model,
-#         contextName: "general_context.md",
-#         patternName: pattern,
-#         MARKDOWNFile: obs
-# }],
-# curl -X POST localhost:8080/patterns/generate
-# curl localhost:8080/MARKDOWN/files | jq
-# curl -X localhost:8080/telegram/send
-# curl -X localhost:8080/MARKDOWN/store
-
 from pattern import pattern
 from pattern import render
 from markdown import markdown
@@ -46,7 +31,7 @@ def completion():
 
     if markdown_path:
         markdown_file = Path(f"{base_path}/{markdown_path}").read_text()
-    return ai_utils.complete(env_file, pattern_dir, data["pattern"], markdown_file, data["message"], data["model"], os.getenv("MCP_SERVER") if with_mcp else "")
+    return ai_utils.complete(env_file, pattern_dir, data["pattern"], markdown_file, data["message"], data["model"], os.getenv("MCP_URL") if with_mcp else "", os.getenv("WEAVIATE_URL"))
 
 @app.route("/patterns/names")
 def pattern_names():
