@@ -8,64 +8,64 @@ activate_env() {
 
 os() {
   activate_env
-  "$SCRIPT_DIR"/src/oneshot/cli.py "$@"
+  python3 -m src.oneshot.cli "$@"
 }
 
 ai() {
   activate_env
-  "$SCRIPT_DIR"/src/oneshot/cli.py shoot "$@"
+  python3 -m src.oneshot.cli shoot "$@"
 }
 
 ai_general_prompt() {
   activate_env
-  "$SCRIPT_DIR"/src/oneshot/cli.py shoot -p general "$@"
+  python3 -m src.oneshot.cli shoot -p general "$@"
 }
 
 ai_devops_question() {
   activate_env
-  "$SCRIPT_DIR"/src/oneshot/cli.py shoot -p devops_quick_question "$@"
+  python3 -m src.oneshot.cli shoot -p devops_quick_question "$@"
 }
 
 ai_code_bash() {
   activate_env
-  "$SCRIPT_DIR"/src/oneshot/cli.py shoot -p devops_code_bash -o -s "$@"
+  python3 -m src.oneshot.cli shoot -p devops_code_bash -o -s "$@"
 }
 
 ai_code_js() {
   activate_env
-  "$SCRIPT_DIR"/src/oneshot/cli.py shoot -p devops_code_js -o -s "$@"
+  python3 -m src.oneshot.cli shoot -p devops_code_js -o -s "$@"
 }
 
 ai_code_python() {
   activate_env
-  "$SCRIPT_DIR"/src/oneshot/cli.py shoot -p devops_code_python -o -s "$@"
+  python3 -m src.oneshot.cli shoot -p devops_code_python -o -s "$@"
 }
 
 ai_code_helm() {
   activate_env
-  "$SCRIPT_DIR"/src/oneshot/cli.py shoot -p devops_code_helm -o -s "$@"
+  python3 -m src.oneshot.cli shoot -p devops_code_helm -o -s "$@"
 }
 
 ai_code() {
   activate_env
-  "$SCRIPT_DIR"/src/oneshot/cli.py shoot -p devops_code -o -s "$@"
+  python3 -m src.oneshot.cli shoot -p devops_code -o -s "$@"
 }
 
 # git
 ai_git() {
   activate_env
-  "$SCRIPT_DIR"/src/oneshot/cli.py shoot -p devops_gitcommit -s "$@"
+  python3 -m src.oneshot.cli shoot -p devops_gitcommit -s "$@"
 }
 
 collect() {
   activate_env
-  "$SCRIPT_DIR"/src/oneshot/cli.py collect "$@"
+  python3 -m src.oneshot.cli collect "$@"
 }
 
 # pattern generator
 generate() {
   activate_env
-  "$SCRIPT_DIR"/src/oneshot/cli.py patterns generate \
+  python3 -m src.oneshot.cli patterns generate \
       -o $HOME/.config/fabric/patterns \
       -t $HOME/projects/github/oneshot/patterns \
       -t $HOME/projects/github/oneshot/patterns/templates \
