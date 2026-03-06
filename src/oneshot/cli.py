@@ -1,4 +1,3 @@
-#! python3
 import json
 import logging
 import os
@@ -13,11 +12,11 @@ from .pattern import pattern as p
 from .pattern import render
 from . import ai_utils
 
-log_level = os.environ.get('LOG_LEVEL', 'INFO').upper()
+log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
     level=log_level,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
 )
 
 oneshot = typer.Typer(help="Oneshot AI CLI", context_settings={"help_option_names": {"-h", "--help"}})

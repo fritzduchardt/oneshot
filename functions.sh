@@ -8,64 +8,64 @@ activate_env() {
 
 os() {
   activate_env
-  python3 -m src.oneshot.cli "$@"
+  PYTHONPATH=$SCRIPT_DIR python3 -m src.oneshot.cli "$@"
 }
 
 ai() {
   activate_env
-  python3 -m src.oneshot.cli shoot "$@"
+  PYTHONPATH=$SCRIPT_DIR python3 -m src.oneshot.cli shoot "$@"
 }
 
 ai_general_prompt() {
   activate_env
-  python3 -m src.oneshot.cli shoot -p general "$@"
+  PYTHONPATH=$SCRIPT_DIR python3 -m src.oneshot.cli shoot -p general "$@"
 }
 
 ai_devops_question() {
   activate_env
-  python3 -m src.oneshot.cli shoot -p devops_quick_question "$@"
+  PYTHONPATH=$SCRIPT_DIR python3 -m src.oneshot.cli shoot -p devops_quick_question "$@"
 }
 
 ai_code_bash() {
   activate_env
-  python3 -m src.oneshot.cli shoot -p devops_code_bash -o -s "$@"
+  PYTHONPATH=$SCRIPT_DIR python3 -m src.oneshot.cli shoot -p devops_code_bash -o -s "$@"
 }
 
 ai_code_js() {
   activate_env
-  python3 -m src.oneshot.cli shoot -p devops_code_js -o -s "$@"
+  PYTHONPATH=$SCRIPT_DIR python3 -m src.oneshot.cli shoot -p devops_code_js -o -s "$@"
 }
 
 ai_code_python() {
   activate_env
-  python3 -m src.oneshot.cli shoot -p devops_code_python -o -s "$@"
+  PYTHONPATH=$SCRIPT_DIR python3 -m src.oneshot.cli shoot -p devops_code_python -o -s "$@"
 }
 
 ai_code_helm() {
   activate_env
-  python3 -m src.oneshot.cli shoot -p devops_code_helm -o -s "$@"
+  PYTHONPATH=$SCRIPT_DIR python3 -m src.oneshot.cli shoot -p devops_code_helm -o -s "$@"
 }
 
 ai_code() {
   activate_env
-  python3 -m src.oneshot.cli shoot -p devops_code -o -s "$@"
+  PYTHONPATH=$SCRIPT_DIR python3 -m src.oneshot.cli shoot -p devops_code -o -s "$@"
 }
 
 # git
 ai_git() {
   activate_env
-  python3 -m src.oneshot.cli shoot -p devops_gitcommit -s "$@"
+  PYTHONPATH=$SCRIPT_DIR python3 -m src.oneshot.cli shoot -p devops_gitcommit -s "$@"
 }
 
 collect() {
   activate_env
-  python3 -m src.oneshot.cli collect "$@"
+  PYTHONPATH=$SCRIPT_DIR python3 -m src.oneshot.cli collect "$@"
 }
 
 # pattern generator
 generate() {
   activate_env
-  python3 -m src.oneshot.cli patterns generate \
+  PYTHONPATH=$SCRIPT_DIR python3 -m src.oneshot.cli patterns generate \
       -o $HOME/.config/fabric/patterns \
       -t $HOME/projects/github/oneshot/patterns \
       -t $HOME/projects/github/oneshot/patterns/templates \
@@ -107,4 +107,4 @@ model() {
   echo $DEFAULT_MODEL
 }
 
-model_chatgpt5
+model_chatgpt5_codex
