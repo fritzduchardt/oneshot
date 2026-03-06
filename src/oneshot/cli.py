@@ -46,7 +46,10 @@ def shoot(
     output_to_disk: bool = typer.Option(False, "--output-to-disk", "-o", help="Write LLM output back to disk"),
     model: str = typer.Option(..., "--model", "-m", help="LLM model to use", envvar="DEFAULT_MODEL"),
     read_stdin: bool = typer.Option(False, "--stdin", "-s", help="Read input from stdin"),
-    prompt: List[str] = typer.Argument([], help="User prompt")
+    prompt: List[str] = typer.Argument([], help="User prompt"),
+    weaviate_host: str = typer.Option("localhost", "--weaviate-host", help="Weaviate host", envvar="WEAVIATE_HOST"),
+    weaviate_port: int = typer.Option(80, "--weaviate-port", help="Weaviate port", envvar="WEAVIATE_PORT"),
+    weaviate_grpc_port: int = typer.Option(50051, "--weaviate-grpc-port", help="Weaviate grpc port", envvar="WEAVIATE_GRPC_PORT"),
 ):
     if env_file == "":
         env_file = os.getenv("OS_CONFIG_ENV_FILE")
@@ -62,7 +65,7 @@ def shoot(
     if prompt:
         prompt_str = " ".join(prompt)
 
-    llm_resp = ai_utils.complete(env_file, pattern_dir, pattern_name, stdin, prompt_str, model, mcp_url)
+    llm_resp = ai_utils.complete(env_file, pattern_dir, pattern_name, stdin, prompt_str, model, mcp_url, weaviate_host, weaviate_port, weaviate_grpc_port)
 
     if output_to_disk:
         generator.write_to_disk(llm_resp)
