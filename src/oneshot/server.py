@@ -2,13 +2,13 @@ import logging
 import os
 import shutil
 from pathlib import Path
-import ai_utils
+from . import ai_utils
 
 from flask import Flask, request
-from pattern import pattern
-from pattern import render
-from markdown import markdown
-from social import telegram
+from .pattern import pattern
+from .pattern import render
+from .markdown import markdown
+from .social import telegram
 
 log_level = os.environ.get('LOG_LEVEL', 'INFO').upper()
 logging.basicConfig(

@@ -7,10 +7,10 @@ from dotenv import load_dotenv
 from weaviate.classes.query import MetadataQuery
 from weaviate.connect import ConnectionParams
 
-import ai.anthropic_utils as anthropic
-import ai.openai_utils as openai
-import ai.xai_utils as xai
-from pattern import pattern as p
+from .ai import anthropic_utils as anthropic
+from .ai import openai_utils as openai
+from .ai import xai_utils as xai
+from .pattern import pattern as p
 
 
 def complete(env_file: str, pattern_dir: str, pattern_name: str, stdin: str, prompt: str, model: str, mcp_url: str, weaviate_url: str = ""):
@@ -21,7 +21,7 @@ def complete(env_file: str, pattern_dir: str, pattern_name: str, stdin: str, pro
     if weaviate_url and pattern_name == "weaviate":
         resp = call_weaviate(prompt)
         if resp:
-            logging.info(f"Weaviate found pattern: {resp["path"]}")
+            logging.info(f"Weaviate found pattern: {resp.get("path")}")
             pattern_name = Path(resp["path"]).parent.name
 
     pattern_content = p.get_pattern(pattern_dir, pattern_name)

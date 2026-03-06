@@ -7,11 +7,11 @@ from typing import List
 
 import typer
 
-from collector import collector as c
-from generator import generator
-from pattern import pattern as p
-from pattern import render
-import ai_utils
+from .collector import collector as c
+from .generator import generator
+from .pattern import pattern as p
+from .pattern import render
+from . import ai_utils
 
 log_level = os.environ.get('LOG_LEVEL', 'INFO').upper()
 logging.basicConfig(
