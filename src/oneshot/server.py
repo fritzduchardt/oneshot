@@ -31,7 +31,7 @@ def completion():
 
     if markdown_path:
         markdown_file = Path(f"{base_path}/{markdown_path}").read_text()
-    return ai_utils.complete(env_file, pattern_dir, data["pattern"], markdown_file, data["message"], data["model"], os.getenv("MCP_URL") if with_mcp else "", os.getenv("WEAVIATE_URL"))
+    return ai_utils.complete(env_file, pattern_dir, data["pattern"], markdown_file, data["message"], data["model"], os.getenv("MCP_URL") if with_mcp else "", os.getenv("WEAVIATE_HOST"), os.getenv("WEAVIATE_PORT", 80), os.getenv("WEAVIATE_GRPC_PORT", 50051))
 
 @app.route("/patterns/names")
 def pattern_names():
