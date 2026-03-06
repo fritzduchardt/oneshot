@@ -10,14 +10,14 @@ from mcp.client.streamable_http import streamable_http_client
 MAX_TOKENS=20000
 
 def list_models() -> list[str]:
-    client = create_client()
+    client = _create_client()
     models = [ model.id for model in client.models.list()]
     return models
 
-def call_anthropic(model: str, pattern: str, prompt: str) -> str:
+async def call_anthropic(model: str, pattern: str, prompt: str) -> str:
     logging.info("Calling anthropic API without tools")
-    client = create_client()
-    messages = create_messages(pattern, prompt)
+    client = _create_client()
+    messages = _create_messages(pattern, prompt)
     # noinspection PyTypeChecker
     response = client.messages.create(
         max_tokens=MAX_TOKENS,
@@ -29,7 +29,7 @@ def call_anthropic(model: str, pattern: str, prompt: str) -> str:
     return str(response.content[0].text)
 
 
-def create_client() -> anthropic.Anthropic:
+def _create_client() -> anthropic.Anthropic:
     client = anthropic.Anthropic(
         api_key=os.environ.get("ANTHROPIC_API_KEY"),  # This is the default and can be omitted
     )
@@ -64,7 +64,7 @@ async def call_anthropic_with_tools(mcp_url: str, model: str, pattern: str, prom
                         "input_schema": tool.inputSchema
                     })
                 logging.info(f"Available tools: {available_tools}")
-                messages = create_messages(pattern, prompt)
+                messages = _create_messages(pattern, prompt)
                 # noinspection PyTypeChecker
                 response = client.messages.create(
                     model=model,
@@ -106,7 +106,7 @@ async def call_anthropic_with_tools(mcp_url: str, model: str, pattern: str, prom
                             tool_result_contents.append(content)
                     elif content.type == 'text':
                         logging.info("LLM does not invoke tool")
-                        final_text.append(content.content)
+                        final_text.append(content.text)
                         return "\n".join(final_text)
                     else:
                         logging.error(f"Unexpected message type: {content.type}")
@@ -125,7 +125,8 @@ async def call_anthropic_with_tools(mcp_url: str, model: str, pattern: str, prom
                     messages=messages,
                     tools=available_tools
                 )
-
+                logging.info(f"Input tokens: {response.usage.input_tokens}")
+                logging.info(f"Output tokens: {response.usage.output_tokens}")
                 final_text.append(response.content[0].text)
 
                 return "\n".join(final_text)
@@ -133,7 +134,7 @@ async def call_anthropic_with_tools(mcp_url: str, model: str, pattern: str, prom
         logging.exception("Failure to call MCP Server or LLM")
         return "Failed on call to MCP Server and / or LLM. Check logs"
 
-def create_messages(pattern: str, prompt: str):
+def _create_messages(pattern: str, prompt: str):
     return [
         {
             "role": "assistant",

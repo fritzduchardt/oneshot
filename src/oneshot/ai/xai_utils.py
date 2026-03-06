@@ -15,12 +15,12 @@ def list_models() -> list[str]:
     return model_names
 
 
-def call_xai(model: str, pattern: str, prompt: str):
+async def call_xai(model: str, pattern: str, prompt: str):
 
     client = create_client()
 
     messages = [system(pattern), user(prompt)]
-    chat = client.chat.create(
+    chat = await client.chat.create(
         model=model,
         messages=messages
     )

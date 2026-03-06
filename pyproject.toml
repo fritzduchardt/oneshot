@@ -14,4 +14,5 @@ dependencies = [
     "typer>=0.24.0",
     "xai-sdk>=1.7.0",
     "weaviate-client>=4.20.1",
+    "tiktoken>=0.12.0",
 ]

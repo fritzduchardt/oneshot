@@ -41,6 +41,11 @@ ai_code_python() {
   "$SCRIPT_DIR"/src/oneshot/cli.py shoot -p devops_code_python -o -s "$@"
 }
 
+ai_code_helm() {
+  activate_env
+  "$SCRIPT_DIR"/src/oneshot/cli.py shoot -p devops_code_helm -o -s "$@"
+}
+
 ai_code() {
   activate_env
   "$SCRIPT_DIR"/src/oneshot/cli.py shoot -p devops_code -o -s "$@"

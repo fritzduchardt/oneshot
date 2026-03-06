@@ -12,7 +12,7 @@ def list_models() -> list[str]:
     models = [ model.id for model in client.models.list()]
     return models
 
-def call_openai(model: str, pattern: str, prompt: str) -> str:
+async def call_openai(model: str, pattern: str, prompt: str) -> str:
     logging.info("Calling openai API without tools")
     client = create_client()
     messages = create_messages(pattern, prompt)
@@ -29,6 +29,8 @@ def call_openai(model: str, pattern: str, prompt: str) -> str:
             messages=messages,
             model=model,
         )
+        logging.info(f"Input tokens: {response.usage.input_tokens}")
+        logging.info(f"Output tokens: {response.usage.output_tokens}")
         if response.choices:
             return response.choices[0].message.content
 

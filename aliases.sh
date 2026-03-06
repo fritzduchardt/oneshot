@@ -7,6 +7,7 @@ alias aicb=ai_code_bash
 alias aicg=ai_code_go
 alias aicj=ai_code_js
 alias aicp=ai_code_python
+alias aich=ai_code_helm
 alias aid=ai_doc
 
 # AI directory and git commands
@@ -18,8 +19,8 @@ alias mc=model_claude
 alias mch=model_claude_haiku
 alias mco=model_claude_opus
 alias mg=model_chatgpt_turbo
-alias mg5=model_chatgpt5
-alias mg5c=model_chatgpt5_codex
+alias mg=model_chatgpt5
+alias mgc=model_chatgpt5_codex
 alias md=model_deepseek
 alias mk=model_grok
 alias mkc=model_grok_code

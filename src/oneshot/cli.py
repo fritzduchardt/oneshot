@@ -23,12 +23,14 @@ logging.basicConfig(
 oneshot = typer.Typer(help="Oneshot AI CLI", context_settings={"help_option_names": {"-h", "--help"}})
 shoot = typer.Typer(help="Shoot query against the AI")
 pattern = typer.Typer(help="Manage your pattern files")
+tokens = typer.Typer(help="Calculate tokens")
 models = typer.Typer(help="Manage API Models")
 collect = typer.Typer(help="Collect files to be handed to the AI")
 list_patterns = typer.Typer(help="List pattern files")
 list_models = typer.Typer(help="List Model names")
 generate_patterns = typer.Typer(help="Generate Fabric pattern files with gomplate")
 oneshot.add_typer(shoot)
+oneshot.add_typer(tokens, name="tokens")
 oneshot.add_typer(collect)
 oneshot.add_typer(pattern, name="patterns")
 oneshot.add_typer(models, name="models")
@@ -119,6 +121,13 @@ def list_models(
         env_file = os.getenv("OS_CONFIG_ENV_FILE")
 
     print(json.dumps(ai_utils.list_models(env_file)))
+
+@tokens.command(name="count")
+def count_tokens(
+):
+    data = sys.stdin.buffer.read()
+    stdin = data.decode("utf-8", errors="replace")
+    print(ai_utils.count_tokens(stdin))
 
 if __name__ == "__main__":
     oneshot()
