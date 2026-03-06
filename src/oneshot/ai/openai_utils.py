@@ -29,8 +29,8 @@ async def call_openai(model: str, pattern: str, prompt: str) -> str:
             messages=messages,
             model=model,
         )
-        logging.info(f"Input tokens: {response.usage.input_tokens}")
-        logging.info(f"Output tokens: {response.usage.output_tokens}")
+        logging.info(f"Input tokens: {response.usage.prompt_tokens}")
+        logging.info(f"Output tokens: {response.usage.completion_tokens}")
         if response.choices:
             return response.choices[0].message.content
 
