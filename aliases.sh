@@ -6,6 +6,7 @@ alias aic=ai_code
 alias aicb=ai_code_bash
 alias aicg=ai_code_go
 alias aicj=ai_code_js
+alias aicp=ai_code_python
 alias aid=ai_doc
 
 # AI directory and git commands

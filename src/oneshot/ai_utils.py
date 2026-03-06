@@ -26,6 +26,8 @@ def complete(env_file: str, pattern_dir: str, pattern_name: str, stdin: str, pro
             pattern_name = Path(resp["path"]).parent.name
 
     pattern_content = p.get_pattern(pattern_dir, pattern_name)
+    if not pattern_content:
+        return ""
 
     logging.info(f"Calling model: {model}")
     logging.info(f"Using pattern: {pattern_name}")
@@ -33,13 +35,11 @@ def complete(env_file: str, pattern_dir: str, pattern_name: str, stdin: str, pro
     llm_resp: str = ""
     if model.startswith("claude"):
         if mcp_url:
-            logging.info(f"Connecting to MCP Server: {mcp_url}")
             llm_resp = asyncio.run(anthropic.call_anthropic_with_tools(mcp_url, model, p.create_complete_pattern(model, pattern_name, pattern_content), p.create_complete_prompt(prompt, stdin)))
         else:
             llm_resp = anthropic.call_anthropic(model, p.create_complete_pattern(model, pattern_name, pattern_content), p.create_complete_prompt(prompt, stdin))
     elif model.startswith("gpt"):
         if mcp_url:
-            logging.info(f"Connecting to MCP Server: {mcp_url}")
             llm_resp = asyncio.run(openai.call_openai_with_tools(mcp_url, model, p.create_complete_pattern(model, pattern_name, pattern_content), p.create_complete_prompt(prompt, stdin)))
         else:
             llm_resp = openai.call_openai(model, p.create_complete_pattern(model, pattern_name, pattern_content), p.create_complete_prompt(prompt, stdin))

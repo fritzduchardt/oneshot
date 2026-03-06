@@ -7,11 +7,11 @@ from typing import List
 
 import typer
 
-import ai_utils
 from collector import collector as c
 from generator import generator
 from pattern import pattern as p
 from pattern import render
+import ai_utils
 
 log_level = os.environ.get('LOG_LEVEL', 'INFO').upper()
 logging.basicConfig(
@@ -20,7 +20,7 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S'
 )
 
-oneshot = typer.Typer(help="Oneshot AI CLI")
+oneshot = typer.Typer(help="Oneshot AI CLI", context_settings={"help_option_names": {"-h", "--help"}})
 shoot = typer.Typer(help="Shoot query against the AI")
 pattern = typer.Typer(help="Manage your pattern files")
 models = typer.Typer(help="Manage API Models")
