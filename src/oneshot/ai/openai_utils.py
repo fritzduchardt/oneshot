@@ -22,6 +22,8 @@ async def call_openai(model: str, pattern: str, prompt: str) -> str:
             model=model,
             input=messages
         )
+        logging.info(f"Input tokens: {response.usage.input_tokens}")
+        logging.info(f"Output tokens: {response.usage.output_tokens}")
         return response.output_text
     else:
         # noinspection PyTypeChecker
