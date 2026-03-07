@@ -1,6 +1,5 @@
 import logging
 import os
-import shutil
 from pathlib import Path
 from . import ai_utils
 
@@ -9,6 +8,7 @@ from .pattern import pattern
 from .pattern import render
 from .markdown import markdown
 from .social import telegram
+from .utils import fileutils
 
 log_level = os.environ.get('LOG_LEVEL', 'INFO').upper()
 logging.basicConfig(
@@ -63,7 +63,7 @@ def generate_patterns():
     output_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
     pattern_dir = os.getenv("OS_PATTERN_TEMPLATE_DIR")
     pattern_template_dir = Path(pattern_dir) / "templates"
-    shutil.rmtree(output_dir)
+    fileutils.clear_directory_contents(output_dir)
     render.render_jinja2_templates(output_dir, [pattern_dir, str(pattern_template_dir)])
     return "OK"
 
