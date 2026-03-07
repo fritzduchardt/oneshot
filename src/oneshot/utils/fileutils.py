@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 def clear_directory_contents(directory_path: str):
