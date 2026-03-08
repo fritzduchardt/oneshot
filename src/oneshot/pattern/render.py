@@ -44,13 +44,13 @@ def render_jinja2_templates(output_path: str, pattern_paths_set: set[str]) -> No
 
                 # Render template
                 template = env.get_template(rel_path.as_posix())
+                logging.info(f"Rendering: {full_path}")
                 rendered = template.render(**context)
 
                 # Write output (strip .j2 extension)
                 out_file = output_path / str(rel_path).removesuffix('.j2')
                 out_file.parent.mkdir(parents=True, exist_ok=True)
                 out_file.write_text(rendered)
-                logging.info(f"Rendered: {out_file}")
 
 def get_files_in_dir(base_path: str, dir_path: str) -> list[str]:
     root_dir = f"{base_path}/{dir_path}"

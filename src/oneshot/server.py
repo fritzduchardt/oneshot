@@ -33,16 +33,30 @@ def completion():
     weaviate_grpc_port = os.getenv("WEAVIATE_GRPC_PORT", 50051)
     prompt = data["message"]
 
+    markdown_file_content="Journal Files:\n\n"
     if markdown_path:
         if markdown_path == "weaviate":
-            resp = ai_utils.call_weaviate(weaviate_host, weaviate_port, weaviate_grpc_host, weaviate_grpc_port, prompt)
-            if resp:
-                logging.info(f"Weaviate found markdown: {resp.get("path")}")
-                markdown_file_content = resp["content"]
+            resp = ai_utils.call_weaviate(weaviate_host, weaviate_port, weaviate_grpc_host, weaviate_grpc_port, "ObsidianFile", prompt, 5)
+            for obj in resp:
+                logging.info(f"Weaviate found markdown: {obj.properties["path"]}")
+                markdown_file_content += f"FILENAME: {obj.properties["path"]}\n"
+                markdown_file_content += f"{obj.properties["content"]}\n\n"
         else:
             markdown_file_content = Path(f"{base_path}/{markdown_path}").read_text()
 
-    return ai_utils.complete(env_file, pattern_dir, data["pattern"], markdown_file_content, prompt, data["model"], os.getenv("MCP_URL") if with_mcp else "", weaviate_host, weaviate_port, weaviate_grpc_host, weaviate_grpc_port)
+    return ai_utils.complete(
+        env_file,
+        pattern_dir,
+        data["pattern"],
+        markdown_file_content,
+        prompt,
+        data["model"],
+        os.getenv("MCP_URL") if with_mcp else "",
+        weaviate_host,
+        weaviate_port,
+        weaviate_grpc_host,
+        weaviate_grpc_port
+    )
 
 @app.route("/patterns/names")
 def pattern_names():
@@ -75,7 +89,7 @@ def generate_patterns():
     pattern_dir_1 = os.getenv("OS_PATTERN_TEMPLATE_DIR")
     pattern_dir_2 = f"{os.getenv("OS_MARKDOWN_BASE_DIR")}/{os.getenv('OS_MARKDOWN_VAULT_PATTERN_DIR')}"
     fileutils.clear_directory_contents(output_dir)
-    render.render_jinja2_templates(output_dir, set([pattern_dir_1, pattern_dir_2]))
+    render.render_jinja2_templates(output_dir, {pattern_dir_1, pattern_dir_2})
     return "OK"
 
 @app.route("/markdown/paths")

@@ -1,10 +1,12 @@
 import asyncio
 import logging
 from pathlib import Path
+from typing import Any
 
 import weaviate
 from dotenv import load_dotenv
 from weaviate.classes.query import MetadataQuery
+from weaviate.collections.classes.internal import Object
 from weaviate.connect import ConnectionParams
 
 from .ai import anthropic_utils as anthropic
@@ -19,10 +21,10 @@ def complete(env_file: str, pattern_dir: str, pattern_name: str, stdin: str, pro
         return ""
 
     if weaviate_host and pattern_name == "weaviate":
-        resp = call_weaviate(weaviate_host, weaviate_port, weaviate_grpc_host, weaviate_grpc_port, prompt)
+        resp = call_weaviate(weaviate_host, weaviate_port, weaviate_grpc_host, weaviate_grpc_port, "PatternFile", prompt)
         if resp:
-            logging.info(f"Weaviate found pattern: {resp.get("path")}")
-            pattern_name = Path(resp["path"]).parent.name
+            logging.info(f"Weaviate found pattern: {resp[0].properties.get("path")}")
+            pattern_name = Path(resp[0].properties["path"]).parent.name
 
     pattern_content = p.get_pattern(pattern_dir, pattern_name)
     if not pattern_content:
@@ -49,7 +51,7 @@ def complete(env_file: str, pattern_dir: str, pattern_name: str, stdin: str, pro
     return llm_resp
 
 
-def call_weaviate(weaviate_host: str, weaviate_port: int, weaviate_grpc_host: str, weaviate_grpc_port: int, prompt: str) -> dict[str, str]:
+def call_weaviate(weaviate_host: str, weaviate_port: int, weaviate_grpc_host: str, weaviate_grpc_port: int, collection:str, prompt: str, limit: int=1, certainty: float = 0.7) -> list[Object[Any, Any]]:
     with weaviate.WeaviateClient(
             connection_params=ConnectionParams.from_params(
                 http_host=weaviate_host,
@@ -60,15 +62,13 @@ def call_weaviate(weaviate_host: str, weaviate_port: int, weaviate_grpc_host: st
                 grpc_secure=False,
             ),
     ) as client:
-        pattern = client.collections.use("PatternFile")
+        pattern = client.collections.use(collection)
         response = pattern.query.near_text(
             query=prompt,
-            limit=1,
+            limit=limit,
             return_metadata=MetadataQuery(distance=True)
         )
-        if response.objects:
-            return response.objects[0].properties
-    return {}
+        return response.objects
 
 
 def list_models(env_file: str) -> list[str]:
