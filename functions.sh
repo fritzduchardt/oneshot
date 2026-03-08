@@ -1,74 +1,74 @@
 #!/bin/bash
 
-SCRIPT_DIR="$(dirname -- "${BASH_SOURCE[0]:-${0}}")"
+OS_SCRIPT_DIR="$(dirname -- "${BASH_SOURCE[0]:-${0}}")"
 
-activate_env() {
-  source "$SCRIPT_DIR"/.venv/bin/activate
+activate_oneshot_env() {
+  source "$OS_SCRIPT_DIR"/.venv/bin/activate
 }
 
 os() {
-  activate_env
-  PYTHONPATH=$SCRIPT_DIR python3 -m src.oneshot.cli "$@"
+  activate_oneshot_env
+  PYTHONPATH=$OS_SCRIPT_DIR python3 -m src.oneshot.cli "$@"
 }
 
 ai() {
-  activate_env
-  PYTHONPATH=$SCRIPT_DIR python3 -m src.oneshot.cli shoot "$@"
+  activate_oneshot_env
+  PYTHONPATH=$OS_SCRIPT_DIR python3 -m src.oneshot.cli shoot "$@"
 }
 
 ai_general_prompt() {
-  activate_env
-  PYTHONPATH=$SCRIPT_DIR python3 -m src.oneshot.cli shoot -p general "$@"
+  activate_oneshot_env
+  PYTHONPATH=$OS_SCRIPT_DIR python3 -m src.oneshot.cli shoot -p general "$@"
 }
 
 ai_devops_question() {
-  activate_env
-  PYTHONPATH=$SCRIPT_DIR python3 -m src.oneshot.cli shoot -p devops_quick_question "$@"
+  activate_oneshot_env
+  PYTHONPATH=$OS_SCRIPT_DIR python3 -m src.oneshot.cli shoot -p devops_quick_question "$@"
 }
 
 ai_code_bash() {
-  activate_env
-  PYTHONPATH=$SCRIPT_DIR python3 -m src.oneshot.cli shoot -p devops_code_bash -o -s "$@"
+  activate_oneshot_env
+  PYTHONPATH=$OS_SCRIPT_DIR python3 -m src.oneshot.cli shoot -p devops_code_bash -o -s "$@"
 }
 
 ai_code_js() {
-  activate_env
-  PYTHONPATH=$SCRIPT_DIR python3 -m src.oneshot.cli shoot -p devops_code_js -o -s "$@"
+  activate_oneshot_env
+  PYTHONPATH=$OS_SCRIPT_DIR python3 -m src.oneshot.cli shoot -p devops_code_js -o -s "$@"
 }
 
 ai_code_python() {
-  activate_env
-  PYTHONPATH=$SCRIPT_DIR python3 -m src.oneshot.cli shoot -p devops_code_python -o -s "$@"
+  activate_oneshot_env
+  PYTHONPATH=$OS_SCRIPT_DIR python3 -m src.oneshot.cli shoot -p devops_code_python -o -s "$@"
 }
 
 ai_code_helm() {
-  activate_env
-  PYTHONPATH=$SCRIPT_DIR python3 -m src.oneshot.cli shoot -p devops_code_helm -o -s "$@"
+  activate_oneshot_env
+  PYTHONPATH=$OS_SCRIPT_DIR python3 -m src.oneshot.cli shoot -p devops_code_helm -o -s "$@"
 }
 
 ai_code() {
-  activate_env
-  PYTHONPATH=$SCRIPT_DIR python3 -m src.oneshot.cli shoot -p devops_code -o -s "$@"
+  activate_oneshot_env
+  PYTHONPATH=$OS_SCRIPT_DIR python3 -m src.oneshot.cli shoot -p devops_code -o -s "$@"
 }
 
 # git
 ai_git() {
-  activate_env
-  PYTHONPATH=$SCRIPT_DIR python3 -m src.oneshot.cli shoot -p devops_gitcommit -s "$@"
+  activate_oneshot_env
+  PYTHONPATH=$OS_SCRIPT_DIR python3 -m src.oneshot.cli shoot -p devops_gitcommit -s "$@"
 }
 
 collect() {
-  activate_env
-  PYTHONPATH=$SCRIPT_DIR python3 -m src.oneshot.cli collect "$@"
+  activate_oneshot_env
+  PYTHONPATH=$OS_SCRIPT_DIR python3 -m src.oneshot.cli collect "$@"
 }
 
 # pattern generator
 generate() {
-  activate_env
-  PYTHONPATH=$SCRIPT_DIR python3 -m src.oneshot.cli patterns generate \
-      -o $HOME/.config/fabric/patterns \
-      -t $HOME/projects/github/oneshot/patterns \
-      -t $HOME/Sync/FritzSync/patterns \
+  activate_oneshot_env
+  PYTHONPATH=$OS_SCRIPT_DIR python3 -m src.oneshot.cli patterns generate \
+      -o "$HOME"/.config/fabric/patterns \
+      -t "$HOME"/projects/github/oneshot/patterns \
+      -t "$HOME"/Sync/FritzSync/patterns \
       "$@"
 }
 

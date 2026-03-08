@@ -49,6 +49,7 @@ def shoot(
     prompt: List[str] = typer.Argument([], help="User prompt"),
     weaviate_host: str = typer.Option("localhost", "--weaviate-host", help="Weaviate host", envvar="WEAVIATE_HOST"),
     weaviate_port: int = typer.Option(80, "--weaviate-port", help="Weaviate port", envvar="WEAVIATE_PORT"),
+    weaviate_grpc_host: str = typer.Option("localhost", "--weaviate-grpc-host", help="Weaviate grpc host", envvar="WEAVIATE_GRPC_HOST"),
     weaviate_grpc_port: int = typer.Option(50051, "--weaviate-grpc-port", help="Weaviate grpc port", envvar="WEAVIATE_GRPC_PORT"),
 ):
     if env_file == "":
@@ -65,7 +66,7 @@ def shoot(
     if prompt:
         prompt_str = " ".join(prompt)
 
-    llm_resp = ai_utils.complete(env_file, pattern_dir, pattern_name, stdin, prompt_str, model, mcp_url, weaviate_host, weaviate_port, weaviate_grpc_port)
+    llm_resp = ai_utils.complete(env_file, pattern_dir, pattern_name, stdin, prompt_str, model, mcp_url, weaviate_host, weaviate_port, weaviate_grpc_host, weaviate_grpc_port)
 
     if output_to_disk:
         generator.write_to_disk(llm_resp)
@@ -102,7 +103,7 @@ def generate_patterns(
             "--output-dir", "-o",
             help="Output directory for generated pattern files"
         ),
-        pattern_template_dir: List[str] = typer.Option(
+        pattern_template_dir: list[str] = typer.Option(
             ...,
             "--template-dir", "-t",
             help="Template directories with Fabric pattern templates to process (can be used multiple times)"
@@ -112,7 +113,7 @@ def generate_patterns(
         logging.error(f"Output dir does not exist: {output_dir}")
         return
 
-    render.render_jinja2_templates(output_dir, pattern_template_dir)
+    render.render_jinja2_templates(output_dir, set(pattern_template_dir))
 
 
 @list_models.command(name="list")

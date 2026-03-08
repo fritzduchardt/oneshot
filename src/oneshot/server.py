@@ -25,13 +25,24 @@ def completion():
     env_file = os.getenv("OS_CONFIG_ENV_FILE")
     pattern_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
     base_path = os.getenv("OS_MARKDOWN_BASE_DIR")
-    markdown_file = ""
     markdown_path = data["markdown"]
     with_mcp = data["with_mcp"]
+    weaviate_host = os.getenv("WEAVIATE_HOST", "localhost")
+    weaviate_port = os.getenv("WEAVIATE_PORT", 80)
+    weaviate_grpc_host = os.getenv("WEAVIATE_GRPC_HOST", "localhost")
+    weaviate_grpc_port = os.getenv("WEAVIATE_GRPC_PORT", 50051)
+    prompt = data["message"]
 
     if markdown_path:
-        markdown_file = Path(f"{base_path}/{markdown_path}").read_text()
-    return ai_utils.complete(env_file, pattern_dir, data["pattern"], markdown_file, data["message"], data["model"], os.getenv("MCP_URL") if with_mcp else "", os.getenv("WEAVIATE_HOST"), os.getenv("WEAVIATE_PORT", 80), os.getenv("WEAVIATE_GRPC_PORT", 50051))
+        if markdown_path == "weaviate":
+            resp = ai_utils.call_weaviate(weaviate_host, weaviate_port, weaviate_grpc_host, weaviate_grpc_port, prompt)
+            if resp:
+                logging.info(f"Weaviate found markdown: {resp.get("path")}")
+                markdown_file_content = resp["content"]
+        else:
+            markdown_file_content = Path(f"{base_path}/{markdown_path}").read_text()
+
+    return ai_utils.complete(env_file, pattern_dir, data["pattern"], markdown_file_content, prompt, data["model"], os.getenv("MCP_URL") if with_mcp else "", weaviate_host, weaviate_port, weaviate_grpc_host, weaviate_grpc_port)
 
 @app.route("/patterns/names")
 def pattern_names():

@@ -13,13 +13,13 @@ from .ai import xai_utils as xai
 from .pattern import pattern as p
 
 
-def complete(env_file: str, pattern_dir: str, pattern_name: str, stdin: str, prompt: str, model: str, mcp_url: str, weaviate_host: str, weaviate_port: int, weaviate_grpc_port: int) -> str:
+def complete(env_file: str, pattern_dir: str, pattern_name: str, stdin: str, prompt: str, model: str, mcp_url: str, weaviate_host: str, weaviate_port: int, weaviate_grpc_host: str, weaviate_grpc_port: int) -> str:
     if not load_dotenv(env_file):
         logging.error(f"Failed to read: {env_file}")
         return ""
 
     if weaviate_host and pattern_name == "weaviate":
-        resp = call_weaviate(weaviate_host, weaviate_port, weaviate_grpc_port, prompt)
+        resp = call_weaviate(weaviate_host, weaviate_port, weaviate_grpc_host, weaviate_grpc_port, prompt)
         if resp:
             logging.info(f"Weaviate found pattern: {resp.get("path")}")
             pattern_name = Path(resp["path"]).parent.name
@@ -49,13 +49,13 @@ def complete(env_file: str, pattern_dir: str, pattern_name: str, stdin: str, pro
     return llm_resp
 
 
-def call_weaviate(weaviate_host: str, weaviate_port: int, weaviate_grpc_port: int, prompt: str) -> dict[str, str]:
+def call_weaviate(weaviate_host: str, weaviate_port: int, weaviate_grpc_host: str, weaviate_grpc_port: int, prompt: str) -> dict[str, str]:
     with weaviate.WeaviateClient(
             connection_params=ConnectionParams.from_params(
                 http_host=weaviate_host,
                 http_port=weaviate_port,
                 http_secure=False,
-                grpc_host=weaviate_host,
+                grpc_host=weaviate_grpc_host,
                 grpc_port=weaviate_grpc_port,
                 grpc_secure=False,
             ),
