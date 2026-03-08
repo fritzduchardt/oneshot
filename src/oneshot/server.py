@@ -61,10 +61,10 @@ def model_names(
 @app.route("/patterns/generate", methods=["POST"])
 def generate_patterns():
     output_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
-    pattern_dir = os.getenv("OS_PATTERN_TEMPLATE_DIR")
-    pattern_template_dir = Path(pattern_dir) / "templates"
+    pattern_dir_1 = os.getenv("OS_PATTERN_TEMPLATE_DIR")
+    pattern_dir_2 = f"{os.getenv("OS_MARKDOWN_BASE_DIR")}/{os.getenv('OS_MARKDOWN_VAULT_PATTERN_DIR')}"
     fileutils.clear_directory_contents(output_dir)
-    render.render_jinja2_templates(output_dir, [pattern_dir, str(pattern_template_dir)])
+    render.render_jinja2_templates(output_dir, set([pattern_dir_1, pattern_dir_2]))
     return "OK"
 
 @app.route("/markdown/paths")
