@@ -95,7 +95,7 @@ def generate_patterns():
     render.render_jinja2_templates(output_dir, {pattern_dir_1, pattern_dir_2})
     if sync_pattern_dir:
         logging.info(f"Syncing patterns in {sync_pattern_dir}")
-        fileutils.clear_directory_contents(output_dir)
+        fileutils.clear_directory_contents(sync_pattern_dir)
         shutil.copytree(output_dir, sync_pattern_dir, dirs_exist_ok=True)
     return "OK"
 
