@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 from pathlib import Path
 from . import ai_utils
 
@@ -8,7 +9,6 @@ from .pattern import pattern
 from .pattern import render
 from .markdown import markdown
 from .social import telegram
-from .utils import fileutils
 
 log_level = os.environ.get('LOG_LEVEL', 'INFO').upper()
 logging.basicConfig(
@@ -86,10 +86,13 @@ def model_names(
 @app.route("/patterns/generate", methods=["POST"])
 def generate_patterns():
     output_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
+    sync_pattern_dir = os.getenv("OS_SYNC_PATTERN_DIR")
     pattern_dir_1 = os.getenv("OS_PATTERN_TEMPLATE_DIR")
     pattern_dir_2 = f"{os.getenv("OS_MARKDOWN_BASE_DIR")}/{os.getenv('OS_MARKDOWN_VAULT_PATTERN_DIR')}"
-    fileutils.clear_directory_contents(output_dir)
+    shutil.rmtree(output_dir)
     render.render_jinja2_templates(output_dir, {pattern_dir_1, pattern_dir_2})
+    shutil.rmtree(sync_pattern_dir)
+    shutil.copytree(output_dir, sync_pattern_dir, dirs_exist_ok=True)
     return "OK"
 
 @app.route("/markdown/paths")
