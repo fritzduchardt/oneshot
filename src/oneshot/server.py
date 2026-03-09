@@ -9,6 +9,7 @@ from .pattern import pattern
 from .pattern import render
 from .markdown import markdown
 from .social import telegram
+from .utils import fileutils
 
 log_level = os.environ.get('LOG_LEVEL', 'INFO').upper()
 logging.basicConfig(
@@ -89,10 +90,13 @@ def generate_patterns():
     sync_pattern_dir = os.getenv("OS_SYNC_PATTERN_DIR")
     pattern_dir_1 = os.getenv("OS_PATTERN_TEMPLATE_DIR")
     pattern_dir_2 = f"{os.getenv("OS_MARKDOWN_BASE_DIR")}/{os.getenv('OS_MARKDOWN_VAULT_PATTERN_DIR')}"
-    shutil.rmtree(output_dir)
+    # shutils fails on emptydir
+    fileutils.clear_directory_contents(output_dir)
     render.render_jinja2_templates(output_dir, {pattern_dir_1, pattern_dir_2})
-    shutil.rmtree(sync_pattern_dir)
-    shutil.copytree(output_dir, sync_pattern_dir, dirs_exist_ok=True)
+    if sync_pattern_dir:
+        logging.info(f"Syncing patterns in {sync_pattern_dir}")
+        fileutils.clear_directory_contents(output_dir)
+        shutil.copytree(output_dir, sync_pattern_dir, dirs_exist_ok=True)
     return "OK"
 
 @app.route("/markdown/paths")
