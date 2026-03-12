@@ -71,8 +71,8 @@ def shoot(
     if output_to_disk:
         generator.write_to_disk(llm_resp)
     else:
-        sys.stdout.reconfigure(encoding="utf-8")
-        print(llm_resp)
+        encoding = sys.stdout.encoding or "utf-8"
+        sys.stdout.buffer.write(llm_resp.encode(encoding, "replace"))
 
 @collect.command()
 def collect(
