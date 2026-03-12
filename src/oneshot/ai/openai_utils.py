@@ -12,13 +12,13 @@ from openai.types.responses.response_output_item import ImageGenerationCall, Loc
 
 
 def list_models() -> list[str]:
-    client = create_client()
+    client = _create_client()
     models = [ model.id for model in client.models.list()]
     return models
 
 async def call_openai(model: str, pattern: str, prompt: str) -> str:
     logging.info("Calling openai API without tools")
-    client = create_client()
+    client = _create_client()
     messages = create_messages(pattern, prompt)
     if model.endswith("-codex"):
         # noinspection PyTypeChecker
@@ -52,7 +52,7 @@ async def call_openai_with_tools(mcp_url: str, model: str, pattern: str, prompt:
                 write_stream,
                 _,
         )):
-            client = create_client()
+            client = _create_client()
             #  noinspection PyBroadException
             # Create a session using the client streams
             async with mcp.ClientSession(read_stream, write_stream) as session:
@@ -81,13 +81,13 @@ async def call_openai_with_tools(mcp_url: str, model: str, pattern: str, prompt:
                         try:
                             result = await session.call_tool(tool_name, tool_args)
                             if result.content:
-                                append_message(input_list, item.call_id, result.content[0].text)
+                                _append_message(input_list, item.call_id, result.content[0].text)
                             else:
                                 logging.error(f"Empty tools response")
-                                append_message(input_list, item.call_id, "Empty tools response")
+                                _append_message(input_list, item.call_id, "Empty tools response")
                         except Exception as e:
                             logging.error(f"Failed on tool call: {e}")
-                            append_message(input_list, item.call_id, f"Failed to call tool: {e}")
+                            _append_message(input_list, item.call_id, f"Failed to call tool: {e}")
                     elif item.type == "message":
                         logging.info("LLM does not invoke tool")
                         if item.content:
@@ -116,7 +116,7 @@ async def call_openai_with_tools(mcp_url: str, model: str, pattern: str, prompt:
         return "Failed on call to MCP Server and / or LLM. Check logs"
 
 
-def append_message(input_list: list[dict[str, str]], call_id:str, output:str):
+def _append_message(input_list: list[dict[str, str]], call_id:str, output:str):
     input_list.append({
         "type": "function_call_output",
         "call_id": call_id,
@@ -124,7 +124,7 @@ def append_message(input_list: list[dict[str, str]], call_id:str, output:str):
     })
 
 
-def create_client() -> OpenAI:
+def _create_client() -> OpenAI:
     client = OpenAI(
         # This is the default and can be omitted
         api_key=os.environ.get("OPENAI_API_KEY"),

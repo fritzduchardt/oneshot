@@ -1,3 +1,4 @@
 {% macro python() %}
 - follow python code conventions
+- start private methods with _
 {% endmacro %}
