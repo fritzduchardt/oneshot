@@ -44,9 +44,9 @@ Specific User Request: {prompt}
 
 def create_complete_pattern(model: str, pattern_name: str, pattern: str) -> str:
     return f"""
-Current model: {model}
-Current pattern: {pattern_name}
-Current date: {datetime.now().strftime("%d-%m-%Y")}
-Current directory: {os.curdir}
+Current Model: {model}
+Current Pattern: {pattern_name}
+Current Date: {datetime.now().strftime("%d-%m-%Y")}
+Current Directory: {os.curdir}
 {pattern}
     """

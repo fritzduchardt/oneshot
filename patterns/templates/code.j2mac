@@ -7,4 +7,5 @@
 - Follow clean code conventions, e.g. introduce methods with speaking names
 - With method sort order, put utility methods under main methods and private methods under public ones
 - Don't remove comments unless you edit exactly that part of the code
+- Always put private methods directly underneath the methods that use them
 {% endmacro %}
