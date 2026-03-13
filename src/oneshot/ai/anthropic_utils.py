@@ -21,7 +21,7 @@ async def call_anthropic(model: str, pattern: str, prompt: str) -> str:
     # noinspection PyTypeChecker
     response = client.messages.create(
         max_tokens=MAX_TOKENS,
-        messages =messages,
+        messages=messages,
         model=model
     )
     logging.info(f"Input tokens: {response.usage.input_tokens}")
@@ -81,6 +81,8 @@ async def call_anthropic_with_tools(mcp_url: str, model: str, pattern: str, prom
                 # Call Tools as indicated by LLM
                 final_text: list[str] = []
                 tool_result_contents = []
+                # keep track of last non-tool content block for fallback
+                last_text_content = None
                 for content in response.content:
                     if content.type == 'tool_use':
                         tool_name = content.name
@@ -94,9 +96,14 @@ async def call_anthropic_with_tools(mcp_url: str, model: str, pattern: str, prom
                         except httpx.HTTPStatusError as e:
                             logging.error(f"Failed on tool call: {e}")
                             tool_result_contents.append(_build_tool_result(content.id, f"Failed to call tool: {e}"))
+                    elif content.type == 'text':
+                        last_text_content = content.text
+
                 if not tool_result_contents:
+                    # LLM responded directly without invoking any tools
                     logging.info("LLM does not invoke tool")
-                    final_text.append(content.text)
+                    if last_text_content is not None:
+                        final_text.append(last_text_content)
                     return "\n".join(final_text)
 
                 _append_message(messages, tool_result_contents)
@@ -113,7 +120,12 @@ async def call_anthropic_with_tools(mcp_url: str, model: str, pattern: str, prom
                 if not response.content:
                     final_text.append("LLM not sure what to do with tool results")
                 else:
-                    final_text.append(response.content[0].text)
+                    # collect all text blocks from the final response
+                    for content in response.content:
+                        if content.type == 'text':
+                            final_text.append(content.text)
+                    if not final_text:
+                        final_text.append("LLM not sure what to do with tool results")
                 return "\n".join(final_text)
     except Exception as e:
         logging.exception(f"Failure to call MCP Server or LLM: {e}")

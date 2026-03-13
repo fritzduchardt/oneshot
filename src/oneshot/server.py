@@ -49,7 +49,7 @@ def completion():
                 5,
             )
             for obj in resp:
-                weaviate_path = str(obj.properties['path']).removeprefix(base_path + "/").removeprefix("/sync/")
+                weaviate_path = str(obj.properties['path']).removeprefix(base_path + "/")
                 logging.info(f"Weaviate found markdown: {weaviate_path}")
                 markdown_file_content += f"FILENAME: {weaviate_path}\n"
                 markdown_file_content += f"{obj.properties['content']}\n\n"

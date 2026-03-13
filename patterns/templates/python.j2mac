@@ -1,4 +1,5 @@
 {% macro python() %}
 - follow python code conventions
 - start private methods with _
+- Prefer double quotes to single quotes
 {% endmacro %}
