@@ -49,8 +49,9 @@ def completion():
                 5,
             )
             for obj in resp:
-                logging.info(f"Weaviate found markdown: {obj.properties['path']}")
-                markdown_file_content += f"FILENAME: {obj.properties['path']}\n"
+                weaviate_path = str(obj.properties['path']).removeprefix(base_path + "/").removeprefix("/sync/")
+                logging.info(f"Weaviate found markdown: {weaviate_path}")
+                markdown_file_content += f"FILENAME: {weaviate_path}\n"
                 markdown_file_content += f"{obj.properties['content']}\n\n"
         else:
             markdown_file_content = Path(f"{base_path}/{markdown_path}").read_text()
@@ -131,18 +132,27 @@ def markdown_paths():
     return paths
 
 
-@app.route("/markdown/file")
-def get_markdown():
+@app.route("/markdown/<path:file_path>")
+def get_markdown(file_path:str):
     base_path = os.getenv("OS_MARKDOWN_BASE_DIR")
-    path = request.args.get("path")
-    return markdown.get_md(f"{base_path}/{path}")
+    md_path = f"{base_path}/{file_path}"
+    if not Path(md_path).exists():
+        md_name = Path(md_path).name
+        logging.info(f"Path inconclusive: {md_path}. Looking for: {md_name}")
+        found = False
+        for file in Path(base_path).rglob(md_name):
+            md_path = file
+            found = True
+            break
+        if not found:
+            abort(404)
+    return markdown.get_md(md_path)
 
 
-@app.route("/markdown/file", methods=["DELETE"])
-def delete_markdown():
+@app.route("/markdown/<path:file_path>", methods=["DELETE"])
+def delete_markdown(file_path:str):
     base_path = os.getenv("OS_MARKDOWN_BASE_DIR")
-    path = request.args.get("path")
-    if markdown.delete_md(f"{base_path}/{path}"):
+    if markdown.delete_md(f"{base_path}/{file_path}"):
         return "OK"
     return "Failure"
 

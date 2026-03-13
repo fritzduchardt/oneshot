@@ -111,8 +111,9 @@ async def call_anthropic_with_tools(mcp_url: str, model: str, pattern: str, prom
                 logging.info(f"Input tokens: {response.usage.input_tokens}")
                 logging.info(f"Output tokens: {response.usage.output_tokens}")
                 if not response.content:
-                    final_text.append("No response from tools")
-                final_text.append(response.content[0].text)
+                    final_text.append("LLM not sure what to do with tool results")
+                else:
+                    final_text.append(response.content[0].text)
                 return "\n".join(final_text)
     except Exception as e:
         logging.exception(f"Failure to call MCP Server or LLM: {e}")

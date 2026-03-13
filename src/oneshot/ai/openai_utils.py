@@ -109,6 +109,8 @@ async def call_openai_with_tools(mcp_url: str, model: str, pattern: str, prompt:
 
                 if response.output and response.output[0].content:
                     final_text.append(response.output[0].content[0].text)
+                else:
+                    final_text.append("LLM not sure what to do with tool results")
 
                 return "\n".join(final_text)
     except Exception:
