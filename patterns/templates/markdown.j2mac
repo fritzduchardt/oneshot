@@ -1,8 +1,17 @@
 {% macro markdown() %}
-- Write raw markdown code without extra quotes or comments
-- Example:
-# HEADLINE
-## Subheadline
-- Point 1
-- Point 2
+- Write in Obsidian Markdown code
+- Never add TODOs
+- Always write names with first letter capitalized.
+- Structure with headlines and sub-headlines
+- Markdown code is written in raw format without any upfront comment of explanations
+- When linking to local files, ensure to use exact path from FILENAME: [short text](path/to/file-as-per-filename-info.md)
+- Show absolute links in format: [link short](https://link.long)
+- Dont prefix output with ```markdown
+- Ensure there are no repetitions or duplicated dots
+- Ensure writing Acronyms, e.g. DRAM, HDD in all caps.
+- Answer in same language as question was asked, if hard to tell, default to English
+- Make keywords or sentence parts bold
+- Date format: dd.MM.yyyy, e.g. 01.12.2035
+- Show tables in markdown format
+- Put single line code snippets in ` and multi line code snippets in ```
 {% endmacro %}
