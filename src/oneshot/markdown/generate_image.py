@@ -3,7 +3,6 @@ import logging
 import re
 from pathlib import Path
 
-from langchain_classic.chains import LLMChain
 from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
@@ -34,9 +33,12 @@ async def generate_food_images(
     images = extract_images(md)
     str_output = StrOutputParser()
 
+    tasks = []
     for image in images:
         cur_pattern = ingreds_pattern if image.endswith("ingredients.png") else final_pattern
-        await generate_image(image, cur_pattern, md, md_file_path, str_output)
+        tasks.append(generate_image(image, cur_pattern, md, md_file_path, str_output))
+
+    await asyncio.gather(*tasks)
 
 
 async def generate_image(image: str, cur_pattern: str, md: str, md_file_path: str, str_output: StrOutputParser):
@@ -49,7 +51,7 @@ async def generate_image(image: str, cur_pattern: str, md: str, md_file_path: st
     )
 
     chain = prompt | chat_model | str_output
-    image_prompt = await chain.ainvoke({"md", md})
+    image_prompt = await chain.ainvoke({"md": md})
     logging.info(f"Image prompt: {image_prompt}")
 
     image_url = await asyncio.to_thread(dalle.run, image_prompt)
