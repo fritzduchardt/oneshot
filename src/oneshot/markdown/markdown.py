@@ -1,6 +1,7 @@
 import logging
 import os.path
 from pathlib import Path
+from . import generate_image
 
 def list_files(path: str) -> list[str]:
     if not os.path.exists(path):
@@ -37,6 +38,7 @@ def save_markdown(md, path):
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(f"{path}", "w") as f:
             f.write(md)
+            generate_image.generate_images(md)
         return True
     except OSError as e:
         logging.error(f"Failed to write mardown to '{path}'")

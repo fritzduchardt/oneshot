@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Any
 
 import weaviate
-from dotenv import load_dotenv
 from weaviate.classes.query import MetadataQuery
 from weaviate.collections.classes.internal import Object
 from weaviate.connect import ConnectionParams
@@ -15,10 +14,7 @@ from .ai import xai_utils as xai
 from .pattern import pattern as p
 
 
-def complete(env_file: str, pattern_dir: str, pattern_name: str, stdin: str, prompt: str, model: str, mcp_url: str, weaviate_host: str, weaviate_port: int, weaviate_grpc_host: str, weaviate_grpc_port: int) -> str:
-    if not load_dotenv(env_file):
-        logging.error(f"Failed to read: {env_file}")
-        return ""
+def complete(pattern_dir: str, pattern_name: str, stdin: str, prompt: str, model: str, mcp_url: str, weaviate_host: str, weaviate_port: int, weaviate_grpc_host: str, weaviate_grpc_port: int) -> str:
 
     if weaviate_host and pattern_name == "weaviate":
         resp = call_weaviate(weaviate_host, weaviate_port, weaviate_grpc_host, weaviate_grpc_port, "PatternFile", prompt)
@@ -51,7 +47,7 @@ def complete(env_file: str, pattern_dir: str, pattern_name: str, stdin: str, pro
     return llm_resp
 
 
-def call_weaviate(weaviate_host: str, weaviate_port: int, weaviate_grpc_host: str, weaviate_grpc_port: int, collection:str, prompt: str, limit: int=1, certainty: float = 0.7) -> list[Object[Any, Any]]:
+def call_weaviate(weaviate_host: str, weaviate_port: int, weaviate_grpc_host: str, weaviate_grpc_port: int, collection:str, prompt: str, limit: int=1) -> list[Object[Any, Any]]:
     with weaviate.WeaviateClient(
             connection_params=ConnectionParams.from_params(
                 http_host=weaviate_host,
@@ -71,10 +67,7 @@ def call_weaviate(weaviate_host: str, weaviate_port: int, weaviate_grpc_host: st
         return response.objects
 
 
-def list_models(env_file: str) -> list[str]:
-    if not load_dotenv(env_file):
-        logging.error(f"Failed to read: {env_file}")
-        return []
+def list_models() -> list[str]:
     models = []
     models.extend(openai.list_models())
     models.extend(anthropic.list_models())

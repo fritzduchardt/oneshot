@@ -8,9 +8,9 @@ from flask import Flask, request, send_file, abort
 from . import ai_utils
 from .pattern import pattern
 from .pattern import render
-from .markdown import markdown
 from .social import telegram
 from .utils import fileutils
+from dotenv import load_dotenv
 
 log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
@@ -19,13 +19,20 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
+if load_dotenv(os.getenv("OS_CONFIG_ENV_FILE")):
+    logging.info("Loading environment variables")
+else:
+    logging.error(f"Failed to read env file.")
+
+# import after env file was loaded
+from .markdown import markdown
+
 app = Flask(__name__)
 
 
 @app.route("/completion", methods=["POST"])
 def completion():
     data = request.get_json()
-    env_file = os.getenv("OS_CONFIG_ENV_FILE")
     pattern_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
     base_path = os.getenv("OS_MARKDOWN_BASE_DIR")
     markdown_path = data["markdown"]
@@ -57,7 +64,6 @@ def completion():
             markdown_file_content = Path(f"{base_path}/{markdown_path}").read_text()
 
     return ai_utils.complete(
-        env_file,
         pattern_dir,
         data["pattern"],
         markdown_file_content,
@@ -95,8 +101,7 @@ def delete_pattern(name: str):
 
 @app.route("/models/names")
 def model_names():
-    env_file = os.getenv("OS_CONFIG_ENV_FILE")
-    return ai_utils.list_models(env_file)
+    return ai_utils.list_models()
 
 
 @app.route("/patterns/generate", methods=["POST"])
