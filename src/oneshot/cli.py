@@ -11,6 +11,7 @@ from .generator import generator
 from .pattern import pattern as p
 from .pattern import render
 from . import ai_utils
+from dotenv import load_dotenv
 
 log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
@@ -18,6 +19,11 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
+
+if load_dotenv(os.getenv("OS_CONFIG_ENV_FILE")):
+    logging.info("Loading environment variables")
+else:
+    logging.error(f"Failed to read env file.")
 
 oneshot = typer.Typer(help="Oneshot AI CLI", context_settings={"help_option_names": {"-h", "--help"}})
 shoot = typer.Typer(help="Shoot query against the AI")
@@ -41,7 +47,6 @@ models.add_typer(list_models)
 def shoot(
     pattern_name: str = typer.Option("general", "--pattern", "-p", help="Predefined prompt pattern"),
     pattern_dir: str = typer.Option("", "--pattern-dir", help="Directory where prompt patterns are located", envvar="OS_PATTERN_DIR"),
-    env_file: str = typer.Option("", "--env-file", help="Path to file with env vars with API credentials in Fabric format", envvar="OS_ENV_FILE"),
     mcp_url: str = typer.Option("", "--mcp-url", "-u", help="MCP server url", envvar="MCP_URL"),
     output_to_disk: bool = typer.Option(False, "--output-to-disk", "-o", help="Write LLM output back to disk"),
     model: str = typer.Option(..., "--model", "-m", help="LLM model to use", envvar="DEFAULT_MODEL"),
@@ -52,8 +57,6 @@ def shoot(
     weaviate_grpc_host: str = typer.Option("localhost", "--weaviate-grpc-host", help="Weaviate grpc host", envvar="WEAVIATE_GRPC_HOST"),
     weaviate_grpc_port: int = typer.Option(50051, "--weaviate-grpc-port", help="Weaviate grpc port", envvar="WEAVIATE_GRPC_PORT"),
 ):
-    if env_file == "":
-        env_file = os.getenv("OS_CONFIG_ENV_FILE")
     if pattern_dir == "":
         pattern_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
 
@@ -66,7 +69,7 @@ def shoot(
     if prompt:
         prompt_str = " ".join(prompt)
 
-    llm_resp = ai_utils.complete(env_file, pattern_dir, pattern_name, stdin, prompt_str, model, mcp_url, weaviate_host, weaviate_port, weaviate_grpc_host, weaviate_grpc_port)
+    llm_resp = ai_utils.complete(pattern_dir, pattern_name, stdin, prompt_str, model, mcp_url, weaviate_host, weaviate_port, weaviate_grpc_host, weaviate_grpc_port)
 
     if output_to_disk:
         generator.write_to_disk(llm_resp)
@@ -118,12 +121,8 @@ def generate_patterns(
 
 @list_models.command(name="list")
 def list_models(
-        env_file: str = typer.Option("", "--env-file", help="Path to file with env vars with API credentials in Fabric format", envvar="OS_ENV_FILE"),
 ):
-    if not env_file:
-        env_file = os.getenv("OS_CONFIG_ENV_FILE")
-
-    print(json.dumps(ai_utils.list_models(env_file)))
+    print(json.dumps(ai_utils.list_models()))
 
 @tokens.command(name="count")
 def count_tokens(

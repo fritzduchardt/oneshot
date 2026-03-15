@@ -72,19 +72,17 @@ async def call_anthropic_with_tools(mcp_url: str, model: str, pattern: str, prom
                     messages=messages,
                     tools=available_tools
                 )
-                # make sure tool blocks are part of message
-                messages.append({
-                    "role": "assistant",
-                    "content": response.content
-                })
 
                 # Call Tools as indicated by LLM
                 final_text: list[str] = []
+                tool_call_contents = []
                 tool_result_contents = []
                 # keep track of last non-tool content block for fallback
                 last_text_content = None
                 for content in response.content:
                     if content.type == 'tool_use':
+                        # make sure tool block is part of message
+                        tool_call_contents.append(content)
                         tool_name = content.name
                         tool_args = content.input
 
@@ -92,7 +90,7 @@ async def call_anthropic_with_tools(mcp_url: str, model: str, pattern: str, prom
                         logging.info(f"Calling tool: {tool_name} with args: {tool_args}")
                         try:
                             result = await session.call_tool(tool_name, tool_args)
-                            tool_result_contents.append(_build_tool_result(content.id, result.content))
+                            tool_result_contents.append(_build_tool_result(content.id, result.content[0].text))
                         except httpx.HTTPStatusError as e:
                             logging.error(f"Failed on tool call: {e}")
                             tool_result_contents.append(_build_tool_result(content.id, f"Failed to call tool: {e}"))
@@ -106,10 +104,12 @@ async def call_anthropic_with_tools(mcp_url: str, model: str, pattern: str, prom
                         final_text.append(last_text_content)
                     return "\n".join(final_text)
 
-                _append_message(messages, tool_result_contents)
+                _append_message(messages, tool_call_contents, "assistant")
+                _append_message(messages, tool_result_contents, "user")
 
                 # Second call to LLM with tool results
                 # noinspection PyTypeChecker
+                logging.info(f"Finale messages: {messages}")
                 response = client.messages.create(
                     model=model,
                     max_tokens=MAX_TOKENS,
@@ -132,11 +132,12 @@ async def call_anthropic_with_tools(mcp_url: str, model: str, pattern: str, prom
         return f"Failed on call to MCP Server and / or LLM: {e}"
 
 
-def _append_message(messages: list, tool_result_contents: list):
-    messages.append({
-        "role": "user",
-        "content": tool_result_contents
-    })
+def _append_message(messages: list, contents: list, role ="user"):
+    if contents:
+        messages.append({
+            "role": role,
+            "content": contents
+        })
 
 
 def _build_tool_result(tool_use_id: str, content) -> dict:

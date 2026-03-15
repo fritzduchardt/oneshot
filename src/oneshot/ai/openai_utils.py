@@ -98,10 +98,9 @@ async def call_openai_with_tools(mcp_url: str, model: str, pattern: str, prompt:
                         final_text.append("Failure to call mcp")
                         return "\n".join(final_text)
 
-
                 # Second call to LLM with tool results
                 # noinspection PyTypeChecker
-                logging.info("Final call to LLM with tool results")
+                logging.info(f"Final call to LLM with tool results: {input_list}")
                 response = client.responses.create(
                     input=input_list,
                     model=model,

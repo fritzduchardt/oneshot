@@ -75,7 +75,8 @@ def list_models() -> list[str]:
 
     filter_prefixes = ["gpt-5.", "claude-", "grok-4"]
 
-    return [m for m in models if m.startswith(tuple(filter_prefixes))]
+    # return [m for m in models if m.startswith(tuple(filter_prefixes))]
+    return models
 
 
 def count_tokens(text: str) -> int:

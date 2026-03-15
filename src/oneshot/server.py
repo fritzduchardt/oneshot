@@ -43,7 +43,7 @@ def completion():
     weaviate_grpc_port = os.getenv("WEAVIATE_GRPC_PORT", 50051)
     prompt = data["message"]
 
-    markdown_file_content = "Journal Files:\n\n"
+    markdown_file_content = ""
     if markdown_path:
         if markdown_path == "weaviate":
             resp = ai_utils.call_weaviate(
@@ -62,6 +62,9 @@ def completion():
                 markdown_file_content += f"{obj.properties['content']}\n\n"
         else:
             markdown_file_content = Path(f"{base_path}/{markdown_path}").read_text()
+
+    if markdown_file_content:
+        markdown_file_content = f"Journal Files:\n\n{markdown_file_content}"
 
     return ai_utils.complete(
         pattern_dir,
