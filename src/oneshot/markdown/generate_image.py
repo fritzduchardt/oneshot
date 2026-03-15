@@ -24,7 +24,7 @@ def extract_images(md: str) -> list[str]:
         res.append(s)
     return res
 
-def generate_food_images(
+async def generate_food_images(
     md: str,
     md_file_path: str,
     pattern_config_pattern_dir,
@@ -36,7 +36,7 @@ def generate_food_images(
 
     for image in images:
         cur_pattern = ingreds_pattern if image.endswith("ingredients.png") else final_pattern
-        asyncio.run(generate_image(image, cur_pattern, md, md_file_path, str_output))
+        await generate_image(image, cur_pattern, md, md_file_path, str_output)
 
 
 async def generate_image(image: str, cur_pattern: str, md: str, md_file_path: str, str_output: StrOutputParser):

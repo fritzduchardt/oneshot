@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os.path
 from pathlib import Path
@@ -39,7 +40,7 @@ def save_markdown(md, path, pattern_config_pattern_dir):
         logging.info(f"Saving markdown file: {path}")
         with open(f"{path}", "w") as f:
             f.write(md.strip())
-        generate_image.generate_food_images(md, path, pattern_config_pattern_dir)
+        asyncio.run(generate_image.generate_food_images(md, path, pattern_config_pattern_dir))
         return True
     except OSError as e:
         logging.error(f"Failed to write markdown to '{path}'")
