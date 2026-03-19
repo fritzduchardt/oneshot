@@ -19,7 +19,12 @@ client = MultiServerMCPClient(
         "oneshot-mcp": {
             "transport": "http",  # HTTP-based remote server
             # Ensure you start your weather server on port 8000
-            "url": f"{os.environ.get("MCP_URL")}/mcp",
+            "url": f"{os.environ.get("MCP_URL_ONESHOT")}/mcp",
+        },
+        "finclaw": {
+            "transport": "http",  # HTTP-based remote server
+            # Ensure you start your weather server on port 8000
+            "url": f"{os.environ.get("MCP_URL_FINCLAW")}/mcp",
         }
     }
 )
