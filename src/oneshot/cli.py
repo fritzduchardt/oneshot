@@ -1,3 +1,12 @@
+import warnings
+
+warnings.filterwarnings(
+    "ignore",
+    message=r".*_UnionGenericAlias.*deprecated.*Python 3\.17",
+    category=DeprecationWarning,
+    module=r"google\.genai\.types",
+)
+
 import json
 import logging
 import os
