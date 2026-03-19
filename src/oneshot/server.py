@@ -19,9 +19,7 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-if load_dotenv(os.getenv("OS_CONFIG_ENV_FILE")):
-    logging.info("Loading environment variables")
-else:
+if not load_dotenv(os.getenv("OS_CONFIG_ENV_FILE")):
     logging.error(f"Failed to read env file.")
 
 # import after env file was loaded
@@ -72,7 +70,7 @@ def completion():
         markdown_file_content,
         prompt,
         data["model"],
-        os.getenv("MCP_URL") if with_mcp else "",
+        with_mcp,
         weaviate_host,
         weaviate_port,
         weaviate_grpc_host,

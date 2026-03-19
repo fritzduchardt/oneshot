@@ -20,9 +20,7 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-if load_dotenv(os.getenv("OS_CONFIG_ENV_FILE")):
-    logging.info("Loading environment variables")
-else:
+if not load_dotenv(os.getenv("OS_CONFIG_ENV_FILE")):
     logging.error(f"Failed to read env file.")
 
 oneshot = typer.Typer(help="Oneshot AI CLI", context_settings={"help_option_names": {"-h", "--help"}})
@@ -47,7 +45,7 @@ models.add_typer(list_models)
 def shoot(
     pattern_name: str = typer.Option("general", "--pattern", "-p", help="Predefined prompt pattern"),
     pattern_dir: str = typer.Option("", "--pattern-dir", help="Directory where prompt patterns are located", envvar="OS_PATTERN_DIR"),
-    mcp_url: str = typer.Option("", "--mcp-url", "-u", help="MCP server url", envvar="MCP_URL"),
+    with_mcp: bool = typer.Option(False, "--mcp", help="Call with mcp server url"),
     output_to_disk: bool = typer.Option(False, "--output-to-disk", "-o", help="Write LLM output back to disk"),
     model: str = typer.Option(..., "--model", "-m", help="LLM model to use", envvar="DEFAULT_MODEL"),
     read_stdin: bool = typer.Option(False, "--stdin", "-s", help="Read input from stdin"),
@@ -69,7 +67,7 @@ def shoot(
     if prompt:
         prompt_str = " ".join(prompt)
 
-    llm_resp = ai_utils.complete(pattern_dir, pattern_name, stdin, prompt_str, model, mcp_url, weaviate_host, weaviate_port, weaviate_grpc_host, weaviate_grpc_port)
+    llm_resp = ai_utils.complete(pattern_dir, pattern_name, stdin, prompt_str, model, with_mcp, weaviate_host, weaviate_port, weaviate_grpc_host, weaviate_grpc_port)
 
     if output_to_disk:
         generator.write_to_disk(llm_resp)

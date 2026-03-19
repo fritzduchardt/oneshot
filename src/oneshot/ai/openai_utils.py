@@ -132,7 +132,6 @@ def _create_client() -> OpenAI:
     )
     return client
 
-
 def create_messages(pattern: str, prompt: str):
     return [
         {

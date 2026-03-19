@@ -20,7 +20,7 @@ async def call_xai(model: str, pattern: str, prompt: str):
     client = create_client()
 
     messages = [system(pattern), user(prompt)]
-    chat = await client.chat.create(
+    chat = client.chat.create(
         model=model,
         messages=messages
     )
