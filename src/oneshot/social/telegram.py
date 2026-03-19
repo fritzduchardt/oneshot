@@ -1,13 +1,15 @@
-import random
-
 import requests
 
-URL = f"https://api.telegram.org/"
+URL = "https://api.telegram.org"
 
-def send(msg: str, token: str):
+
+def send(msg: str, token: str, chat_id: int):
+    if chat_id is None:
+        raise ValueError("chat_id is required")
+
     payload = {
-        "chat_id": random.randint(100_000_000, 999_999_999),
-        "text": msg
+        "chat_id": chat_id,
+        "text": msg,
     }
     response = requests.post(f"{URL}/bot{token}/sendMessage", json=payload)
     response.raise_for_status()

@@ -180,7 +180,19 @@ def markdown_store():
 @app.route("/telegram/send", methods=["POST"])
 def telegram_send():
     data = request.get_json()
-    telegram.send(data["message"], os.getenv("TELEGRAM_BOT_TOKEN"))
+    url_path = data["markdown"]
+    count: int = 1
+    while os.getenv(f"OS_MARKDOWN_VAULT_DIR_{count}"):
+        url_path = url_path.replace(os.getenv(f"OS_MARKDOWN_VAULT_DIR_{count}"), "")
+        count = count + 1
+    url_path = url_path.replace('.md', '.html')
+    logging.info(f"Sharing path: {url_path}")
+    try:
+        telegram.send(f"https://yummy.duchardt.net/{url_path}", os.getenv("TELEGRAM_BOT_TOKEN"), os.getenv("TELEGRAM_CHAT_ID"))
+        return "OK"
+    except Exception as e:
+        logging.error(e)
+        return "Failure"
 
 
 @app.route("/image/<path:image_path>")
