@@ -65,7 +65,7 @@ def list_models() -> list[str]:
     models.extend(gemini_utils.list_models())
     models.extend(deepseek_utils.list_models())
 
-    filter_prefixes = ["gpt-5.", "claude-", "grok-4", "gemini-2", "deepseek"]
+    filter_prefixes = ["gpt-5.", "claude-", "grok-4", "gemini-2", "gemini-3", "deepseek"]
     return [m for m in models if m.startswith(tuple(filter_prefixes))]
 
 
