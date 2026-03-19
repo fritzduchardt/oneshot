@@ -28,7 +28,10 @@ def get_md(path: str) -> str | None:
 
 def delete_md(path: str) -> bool:
     try:
-        os.remove(path)
+        base_name = Path(path).name.rstrip(".md")
+        files = [file for file in Path(path).parent.iterdir() if file.is_file() and file.name.startswith(base_name)]
+        for file in files:
+            os.remove(file)
         return True
     except FileNotFoundError:
         logging.error(f"Error: File '{path}' not found")
