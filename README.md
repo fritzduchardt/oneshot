@@ -1,9 +1,11 @@
-# CLI for Oneshot AI coding
+# Oneshot AI Coding CLI
 
-## General Usage
+A simple CLI for running single-shot prompts and managing prompt patterns.
 
-```bash
-# basic
+## Usage
+
+### Basic
+
 ./src/oneshot/cli.py shoot \
   --pattern|-p my-pattern \
   --pattern-dir=dir-path \
@@ -13,12 +15,13 @@
   --model|-m \
   [Specific User Request]
 
-# generate patterns
+### Generate Patterns
+
 ./src/oneshot/cli.py pattern generate \
-  --output-dir|-o=dir-path
-  --template-dir|-t=dir-path
+  --output-dir|-o=dir-path \
+  --template-dir|-t=dir-path \
   --template-dir|-t=dir-path-2
 
-# list patterns
+### List Patterns
+
 ./src/oneshot/cli.py pattern list
-```
