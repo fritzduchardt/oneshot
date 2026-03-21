@@ -16,12 +16,6 @@ from .pattern import pattern as p
 
 def complete(pattern_dir: str, pattern_name: str, stdin: str, prompt: str, model: str, with_mcp: bool, weaviate_host: str, weaviate_port: int, weaviate_grpc_host: str, weaviate_grpc_port: int) -> str:
 
-    if weaviate_host and pattern_name == "weaviate":
-        resp = call_weaviate(weaviate_host, weaviate_port, weaviate_grpc_host, weaviate_grpc_port, "PatternFile", prompt)
-        if resp:
-            logging.info(f"Weaviate found pattern: {resp[0].properties.get("path")}")
-            pattern_name = Path(resp[0].properties["path"]).parent.name
-
     pattern_content = p.get_pattern(pattern_dir, pattern_name)
     if not pattern_content:
         return ""
@@ -49,11 +43,25 @@ def call_weaviate(weaviate_host: str, weaviate_port: int, weaviate_grpc_host: st
             ),
     ) as client:
         pattern = client.collections.use(collection)
-        response = pattern.query.near_text(
-            query=prompt,
-            limit=limit,
-            return_metadata=MetadataQuery(distance=True)
-        )
+
+        if collection == "PatternFile":
+            prompt = " ".join(prompt.split(maxsplit=2)[:2])
+            ## KEYWORD
+            logging.info(f"Prompt: {prompt}")
+            response = pattern.query.bm25(
+                query=prompt,
+                query_properties=["path", "content"],
+                limit=limit
+            )
+        else:
+            from weaviate.collections.classes.grpc import MetadataQuery
+            response = pattern.query.near_text(
+                query=prompt,
+                limit=limit,
+                certainty=0.6,
+                return_metadata=MetadataQuery(distance=True)
+            )
+
         return response.objects
 
 

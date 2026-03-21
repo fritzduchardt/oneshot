@@ -40,6 +40,15 @@ def completion():
     weaviate_grpc_host = os.getenv("WEAVIATE_GRPC_HOST", "localhost")
     weaviate_grpc_port = os.getenv("WEAVIATE_GRPC_PORT", 50051)
     prompt = data["message"]
+    pattern_name = data["pattern"]
+
+    if pattern_name == "weaviate":
+        resp = ai_utils.call_weaviate(weaviate_host, weaviate_port, weaviate_grpc_host, weaviate_grpc_port, "PatternFile", prompt)
+        if resp:
+            logging.info(f"Weaviate found pattern: {resp[0].properties.get("path")}")
+            pattern_name = Path(resp[0].properties["path"]).parent.name
+        else:
+            pattern_name = "general"
 
     markdown_file_content = ""
     if markdown_path:
@@ -66,7 +75,7 @@ def completion():
 
     return ai_utils.complete(
         pattern_dir,
-        data["pattern"],
+        pattern_name,
         markdown_file_content,
         prompt,
         data["model"],

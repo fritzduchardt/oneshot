@@ -47,6 +47,7 @@ def create_complete_pattern(model: str, pattern_name: str, pattern: str) -> str:
 Current Model: {model}
 Current Pattern: {pattern_name}
 Current Date: {datetime.now().strftime("%d-%m-%Y")}
+Current Timestamp: {datetime.now().timestamp()}
 Current Directory: {os.curdir}
 {pattern}
     """
