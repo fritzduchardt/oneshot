@@ -12,8 +12,8 @@ def collect_files(collect_expr: str, include_hidden: bool) -> None:
             files = filter_files(files)
 
         for filename in files:
-            full_path = Path(root) / filename
-            if pattern.search(str(full_path)):
+            full_path = str(Path(root) / filename)
+            if pattern.search(full_path):
                 cat_file(full_path)
 
 def collect_files_async(collect_expr: str, include_token: bool, num_threads: int):

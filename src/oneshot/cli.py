@@ -111,6 +111,7 @@ def collect(
     include_hidden: bool = typer.Option(False, "--hidden", "-H", help="Include hidden files in collection"),
     num_threads: int = typer.Option(1, "--threads", "-t", help="Number of concurrent threads for operation"),
 ):
+    collect_dir = collect_dir.lstrip("./")
     if num_threads > 1:
         logging.debug(f"Running with {num_threads} threads")
         c.collect_files_async(collect_dir, include_hidden, num_threads)

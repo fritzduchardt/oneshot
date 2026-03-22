@@ -19,4 +19,4 @@ USER oneshot
 
 EXPOSE 8080
 
-ENTRYPOINT ["python", "-m", "oneshot.server"]
+ENTRYPOINT ["gunicorn", "--bind", "0.0.0.0:8080", "--timeout", "300", "--keep-alive", "300", "oneshot.server:app"]
