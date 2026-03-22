@@ -24,4 +24,5 @@ dependencies = [
     "langchain-xai>=1.2.2",
     "langchain-google-genai>=3.2.2",
     "langchain-deepseek>=1.0.1",
+    "gunicorn>=25.1.0",
 ]
