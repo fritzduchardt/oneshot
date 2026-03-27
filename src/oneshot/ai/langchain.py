@@ -49,6 +49,8 @@ async def call_ai_with_tools(model: str, pattern: str, prompt: str) -> str:
         messages = _create_messages(pattern, prompt)
         logging.info(f"Available tools: {available_tools}")
         response = await agent.ainvoke({"messages": messages})
+        logging.info(f"Input tokens: {response["messages"][-1].usage_metadata["input_tokens"]}")
+        logging.info(f"Output tokens: {response["messages"][-1].usage_metadata["output_tokens"]}")
         return response["messages"][-1].text
     except Exception as e:
         logging.exception(f"Failure to call MCP Server or LLM: {e}")
