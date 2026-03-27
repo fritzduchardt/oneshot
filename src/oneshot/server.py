@@ -18,6 +18,10 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
+logging.getLogger("werkzeug").setLevel(logging.ERROR)
+logging.getLogger("httpx").setLevel(logging.ERROR)
+logging.getLogger("mcp.client.streamable_http").setLevel(logging.ERROR)
+
 
 if not load_dotenv(os.getenv("OS_CONFIG_ENV_FILE")):
     logging.error(f"Failed to read env file.")
