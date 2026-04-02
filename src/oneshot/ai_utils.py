@@ -1,10 +1,8 @@
 import asyncio
 import logging
-from pathlib import Path
 from typing import Any
 
 import weaviate
-from weaviate.classes.query import MetadataQuery
 from weaviate.collections.classes.internal import Object
 from weaviate.connect import ConnectionParams
 
@@ -74,7 +72,15 @@ def list_models() -> list[str]:
     models.extend(deepseek_utils.list_models())
 
     filter_prefixes = ["gpt-5.", "claude-", "grok-4", "gemini-2", "gemini-3", "deepseek"]
-    return [m for m in models if m.startswith(tuple(filter_prefixes))]
+    blacklisted_models = [
+        "gpt-5.2-pro",
+        "gpt-5.2-pro-2025-12-11",
+        "gpt-5.4-pro",
+        "gpt-5.4-pro-2026-03-05",
+    ]
+    filtered_models = [m for m in models if m.startswith(tuple(filter_prefixes))]
+    return [m for m in filtered_models if not m in tuple(blacklisted_models)]
+
 
 
 def count_tokens(text: str) -> int:
