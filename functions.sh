@@ -91,11 +91,11 @@ model_claude_haiku() {
 }
 
 model_chatgpt5() {
-  export DEFAULT_MODEL=gpt-5.2
+  export DEFAULT_MODEL=gpt-5.4
 }
 
 model_chatgpt5_codex() {
-  export DEFAULT_MODEL=gpt-5.2-codex
+  export DEFAULT_MODEL=gpt-5.3-codex
 }
 
 model_grok_code() {
