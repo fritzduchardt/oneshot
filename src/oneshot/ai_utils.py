@@ -66,13 +66,33 @@ def list_models() -> list[str]:
     models.extend(gemini_utils.list_models())
     models.extend(deepseek_utils.list_models())
 
-    filter_prefixes = ["gpt-5.", "claude-", "grok-4", "gemini-2", "gemini-3", "deepseek"]
-    blacklisted_words = ["codex"]
+    filter_prefixes = [
+        "gpt-5",
+        "claude-",
+        "grok-4",
+        "gemini-2",
+        "gemini-3",
+        "deepseek",
+    ]
+    blacklisted_words = [
+        "codex",
+        "gpt-5.1",
+        "gpt-5.2",
+        "gpt-5.3",
+        "claude-opus-4-1",
+        "claude-opus-4-5",
+        "claude-sonnet-4-5",
+        "gemini-2",
+        "grok-4-1",
+        "gpt-5-pro",
+    ]
     blacklisted_models = [
+        "gpt-5-pro",
         "gpt-5.2-pro",
         "gpt-5.2-pro-2025-12-11",
         "gpt-5.4-pro",
         "gpt-5.4-pro-2026-03-05",
+        "grok-4-0709",
     ]
 
     filtered_models = [m for m in models if m.startswith(tuple(filter_prefixes))]
