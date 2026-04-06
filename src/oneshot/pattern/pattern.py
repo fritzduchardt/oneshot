@@ -4,6 +4,9 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 
+from ..utils import dates
+
+
 def get_pattern(path: str, pattern: str) -> str | None:
     pattern_path = f"{path}/{pattern}/system.md"
     try:
@@ -46,8 +49,7 @@ def create_complete_pattern(model: str, pattern_name: str, pattern: str) -> str:
     return f"""
 Current Model: {model}
 Current Pattern: {pattern_name}
-Current Date: {datetime.now().strftime("%d-%m-%Y")}
-Current Timestamp: {datetime.now().timestamp()}
+Todays Date and Time: {dates.datetime_to_string(datetime.now())}
 Current Directory: {os.curdir}
 {pattern}
     """
