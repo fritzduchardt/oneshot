@@ -14,12 +14,12 @@ warnings.filterwarnings(
 
 from langchain.agents import create_agent
 from langchain_mcp_adapters.client import MultiServerMCPClient
-from langchain.chat_models import init_chat_model
+from langchain.chat_models import init_chat_model, BaseChatModel
 from langchain_google_genai import ChatGoogleGenerativeAI
 from . import ai_utils
 
 TOKEN_LIMIT_MCP = 20000
-TOKEN_LIMIT_CLI = 200000
+TOKEN_LIMIT_CLI = 10
 
 client = MultiServerMCPClient(
     {
@@ -37,10 +37,10 @@ client = MultiServerMCPClient(
 
 def call_ai(model: str, pattern: str, prompt: str) -> str:
     logging.info("Calling AI without tools")
-    llm = _create_llm(model)
+    llm = _create_llm(model, TOKEN_LIMIT_CLI)
     messages = _create_messages(pattern, prompt)
 
-    _validate_token_count(llm, json.dumps(messages), TOKEN_LIMIT_CLI)
+    _validate_token_count(llm, messages, TOKEN_LIMIT_CLI)
 
     response = llm.invoke(messages)
     logging.info(f"Input tokens: {response.usage_metadata['input_tokens']}")
@@ -51,7 +51,7 @@ def call_ai(model: str, pattern: str, prompt: str) -> str:
 async def call_ai_with_tools(model: str, pattern: str, prompt: str) -> str:
     try:
         available_tools = await client.get_tools()
-        llm = _create_llm(model)
+        llm = _create_llm(model, TOKEN_LIMIT_MCP)
         messages = _create_messages(pattern, prompt)
 
         _validate_token_count(llm, messages, TOKEN_LIMIT_MCP)
@@ -62,6 +62,7 @@ async def call_ai_with_tools(model: str, pattern: str, prompt: str) -> str:
         )
 
         logging.info(f"Available tools: {available_tools}")
+        # noinspection PyTypeChecker
         response = await agent.ainvoke({"messages": messages})
         logging.info(f"Input tokens: {response['messages'][-1].usage_metadata['input_tokens']}")
         logging.info(f"Output tokens: {response['messages'][-1].usage_metadata['output_tokens']}")
@@ -92,15 +93,18 @@ def _validate_token_count(llm, messages, token_count=MAX_TOKENS) -> None:
         )
 
 
-def _create_llm(model: str) -> ChatGoogleGenerativeAI:
+def _create_llm(model: str, max_tokens: int) -> BaseChatModel:
+    ret: BaseChatModel
     if model.startswith("gemini"):
-        return ChatGoogleGenerativeAI(
+        ret = ChatGoogleGenerativeAI(
             model=model,
             temperature=0,
             google_api_key=os.environ.get("GOOGLE_API_KEY"),
         )
-
-    return init_chat_model(model)
+    else:
+        ret = init_chat_model(model)
+    ret.max_tokens = max_tokens
+    return ret
 
 
 def _create_messages(pattern: str, prompt: str):
