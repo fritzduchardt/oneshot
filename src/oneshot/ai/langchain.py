@@ -18,41 +18,44 @@ from langchain_mcp_adapters.client import MultiServerMCPClient
 from langchain.chat_models import init_chat_model
 from langchain_google_genai import ChatGoogleGenerativeAI
 
+INTERRUPT_BEFORE_TOKENS = 20000
+
 client = MultiServerMCPClient(
     {
         "oneshot-mcp": {
-            "transport": "http",  # HTTP-based remote server
-            # Ensure you start your weather server on port 8000
-            "url": f"{os.environ.get("MCP_URL_ONESHOT")}/mcp",
+            "transport": "http",
+            "url": f"{os.environ.get('MCP_URL_ONESHOT')}/mcp",
         },
         "finclaw": {
-            "transport": "http",  # HTTP-based remote server
-            # Ensure you start your weather server on port 8000
-            "url": f"{os.environ.get("MCP_URL_FINCLAW")}/mcp",
-        }
+            "transport": "http",
+            "url": f"{os.environ.get('MCP_URL_FINCLAW')}/mcp",
+        },
     }
 )
+
 
 def call_ai(model: str, pattern: str, prompt: str) -> str:
     logging.info("Calling AI without tools")
     llm = _create_llm(model)
     messages = _create_messages(pattern, prompt)
 
-    if not validate_token_count(json.dumps(messages)):
+    if not validate_token_count(json.dumps(messages), interrupt_before=INTERRUPT_BEFORE_TOKENS):
         return "Something went wrong, query has too many tokens"
 
     response = llm.invoke(messages)
-    logging.info(f"Input tokens: {response.usage_metadata["input_tokens"]}")
-    logging.info(f"Output tokens: {response.usage_metadata["output_tokens"]}")
+    logging.info(f"Input tokens: {response.usage_metadata['input_tokens']}")
+    logging.info(f"Output tokens: {response.usage_metadata['output_tokens']}")
     return response.text
 
 
-def validate_token_count(prompt: str) -> bool:
+def validate_token_count(prompt: str, interrupt_before: int = MAX_TOKENS) -> bool:
     token_count = ai_utils.count_tokens(prompt)
-    if token_count > MAX_TOKENS:
-        logging.error(f"Max tokens reached: {token_count}")
+    threshold = min(interrupt_before, MAX_TOKENS)
+    if token_count > threshold:
+        logging.error(f"Max tokens reached: {token_count} (threshold={threshold})")
         return False
     return True
+
 
 async def call_ai_with_tools(model: str, pattern: str, prompt: str) -> str:
     try:
@@ -60,17 +63,17 @@ async def call_ai_with_tools(model: str, pattern: str, prompt: str) -> str:
         llm = _create_llm(model)
         agent = create_agent(
             model=llm,
-            tools=available_tools
+            tools=available_tools,
         )
         messages = _create_messages(pattern, prompt)
 
-        if not validate_token_count(json.dumps(messages)):
+        if not validate_token_count(json.dumps(messages), interrupt_before=INTERRUPT_BEFORE_TOKENS):
             return "Something went wrong, query has too many tokens"
 
         logging.info(f"Available tools: {available_tools}")
         response = await agent.ainvoke({"messages": messages})
-        logging.info(f"Input tokens: {response["messages"][-1].usage_metadata["input_tokens"]}")
-        logging.info(f"Output tokens: {response["messages"][-1].usage_metadata["output_tokens"]}")
+        logging.info(f"Input tokens: {response['messages'][-1].usage_metadata['input_tokens']}")
+        logging.info(f"Output tokens: {response['messages'][-1].usage_metadata['output_tokens']}")
         return response["messages"][-1].text
     except Exception as e:
         logging.exception(f"Failure to call MCP Server or LLM: {e}")
@@ -97,5 +100,5 @@ def _create_messages(pattern: str, prompt: str):
         {
             "role": "user",
             "content": prompt,
-        }
+        },
     ]
