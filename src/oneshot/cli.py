@@ -9,7 +9,7 @@ from typing import List
 import typer
 from dotenv import load_dotenv
 
-from . import ai_utils
+from .ai import ai_utils
 from .collector import collector as c
 from .generator import generator
 from .pattern import pattern as p

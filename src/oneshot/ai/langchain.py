@@ -1,6 +1,10 @@
+import json
 import logging
 import os
 import warnings
+
+from .anthropic_utils import MAX_TOKENS
+from . import ai_utils
 
 warnings.filterwarnings(
     "ignore",
@@ -30,13 +34,25 @@ client = MultiServerMCPClient(
 )
 
 def call_ai(model: str, pattern: str, prompt: str) -> str:
-    logging.info("Calling openai API without tools")
+    logging.info("Calling AI without tools")
     llm = _create_llm(model)
-    response = llm.invoke(_create_messages(pattern, prompt))
+    messages = _create_messages(pattern, prompt)
+
+    if not validate_token_count(json.dumps(messages)):
+        return "Something went wrong, query has too many tokens"
+
+    response = llm.invoke(messages)
     logging.info(f"Input tokens: {response.usage_metadata["input_tokens"]}")
     logging.info(f"Output tokens: {response.usage_metadata["output_tokens"]}")
     return response.text
 
+
+def validate_token_count(prompt: str) -> bool:
+    token_count = ai_utils.count_tokens(prompt)
+    if token_count > MAX_TOKENS:
+        logging.error(f"Max tokens reached: {token_count}")
+        return False
+    return True
 
 async def call_ai_with_tools(model: str, pattern: str, prompt: str) -> str:
     try:
@@ -47,6 +63,10 @@ async def call_ai_with_tools(model: str, pattern: str, prompt: str) -> str:
             tools=available_tools
         )
         messages = _create_messages(pattern, prompt)
+
+        if not validate_token_count(json.dumps(messages)):
+            return "Something went wrong, query has too many tokens"
+
         logging.info(f"Available tools: {available_tools}")
         response = await agent.ainvoke({"messages": messages})
         logging.info(f"Input tokens: {response["messages"][-1].usage_metadata["input_tokens"]}")

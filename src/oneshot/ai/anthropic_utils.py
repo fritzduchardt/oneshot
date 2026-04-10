@@ -7,7 +7,7 @@ import mcp
 import mcp.client
 from mcp.client.streamable_http import streamable_http_client
 
-MAX_TOKENS=20000
+MAX_TOKENS=12000
 
 def list_models() -> list[str]:
     client = _create_client()

@@ -110,4 +110,4 @@ model() {
   echo $DEFAULT_MODEL
 }
 
-model_chatgpt5_codex
+model_claude

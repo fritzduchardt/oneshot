@@ -6,10 +6,10 @@ import weaviate
 from weaviate.collections.classes.internal import Object
 from weaviate.connect import ConnectionParams
 
-from .ai import anthropic_utils as anthropic
-from .ai import deepseek_utils, gemini_utils, openai_utils, xai_utils
-from .ai import langchain as lc
-from .pattern import pattern as p
+from . import anthropic_utils as anthropic
+from . import deepseek_utils, gemini_utils, openai_utils, xai_utils
+from . import langchain as lc
+from ..pattern import pattern as p
 
 
 def complete(pattern_dir: str, pattern_name: str, stdin: str, prompt: str, model: str, with_mcp: bool, weaviate_host: str, weaviate_port: int, weaviate_grpc_host: str, weaviate_grpc_port: int) -> str:

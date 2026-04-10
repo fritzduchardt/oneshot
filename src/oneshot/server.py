@@ -5,7 +5,7 @@ from pathlib import Path
 
 from flask import Flask, request, send_file, abort
 
-from . import ai_utils
+from .ai import ai_utils
 from .pattern import pattern
 from .pattern import render
 from .social import telegram
