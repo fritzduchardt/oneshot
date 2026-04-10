@@ -3,9 +3,6 @@ import logging
 import os
 import warnings
 
-from .anthropic_utils import MAX_TOKENS
-from . import ai_utils
-
 warnings.filterwarnings(
     "ignore",
     message=r".*Core Pydantic V1 functionality isn't compatible with Python 3\.14 or greater.*",
@@ -18,7 +15,7 @@ from langchain_mcp_adapters.client import MultiServerMCPClient
 from langchain.chat_models import init_chat_model
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-INTERRUPT_BEFORE_TOKENS = 20000
+TOKEN_LIMIT = 20000
 
 client = MultiServerMCPClient(
     {
@@ -39,7 +36,7 @@ def call_ai(model: str, pattern: str, prompt: str) -> str:
     llm = _create_llm(model)
     messages = _create_messages(pattern, prompt)
 
-    if not validate_token_count(json.dumps(messages), interrupt_before=INTERRUPT_BEFORE_TOKENS):
+    if not _validate_token_count(json.dumps(messages)):
         return "Something went wrong, query has too many tokens"
 
     response = llm.invoke(messages)
@@ -48,13 +45,23 @@ def call_ai(model: str, pattern: str, prompt: str) -> str:
     return response.text
 
 
-def validate_token_count(prompt: str, interrupt_before: int = MAX_TOKENS) -> bool:
-    token_count = ai_utils.count_tokens(prompt)
-    threshold = min(interrupt_before, MAX_TOKENS)
-    if token_count > threshold:
-        logging.error(f"Max tokens reached: {token_count} (threshold={threshold})")
-        return False
-    return True
+def _validate_token_count(llm, messages) -> None:
+    estimated_tokens = None
+
+    if hasattr(llm, "get_num_tokens_from_messages"):
+        try:
+            estimated_tokens = llm.get_num_tokens_from_messages(messages)
+        except Exception:
+            estimated_tokens = None
+
+    if estimated_tokens is None:
+        combined = "\n".join(str(message.get("content", "")) for message in messages)
+        estimated_tokens = len(combined) // 4
+
+    if estimated_tokens > TOKEN_LIMIT:
+        raise ValueError(
+            f"Interrupting before execution: estimated input tokens {estimated_tokens} exceed limit {TOKEN_LIMIT}."
+        )
 
 
 async def call_ai_with_tools(model: str, pattern: str, prompt: str) -> str:
@@ -67,7 +74,7 @@ async def call_ai_with_tools(model: str, pattern: str, prompt: str) -> str:
         )
         messages = _create_messages(pattern, prompt)
 
-        if not validate_token_count(json.dumps(messages), interrupt_before=INTERRUPT_BEFORE_TOKENS):
+        if not _validate_token_count(llm, messages):
             return "Something went wrong, query has too many tokens"
 
         logging.info(f"Available tools: {available_tools}")
