@@ -25,4 +25,5 @@ dependencies = [
     "langchain-google-genai>=3.2.2",
     "langchain-deepseek>=1.0.1",
     "gunicorn>=25.1.0",
+    "python-dateutil>=2.9.0.post0",
 ]
