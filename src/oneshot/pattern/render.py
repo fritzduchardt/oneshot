@@ -8,10 +8,10 @@ from jinja2 import Environment, FileSystemLoader
 def render_jinja2_templates(output_path: str, pattern_paths_set: set[str]) -> None:
 
     output_path = Path(output_path)
-    template_dirs = [ f"{path}/templates" for path in pattern_paths_set ]
     all_templates_files = []
     all_templates_files.extend(pattern_paths_set)
-    all_templates_files.extend(template_dirs)
+    # add template dirs
+    all_templates_files.extend([f"{path}/templates" for path in pattern_paths_set])
 
     # Initialize Jinja2 environment with the template root
     env = Environment(
