@@ -51,5 +51,6 @@ Current Model: {model}
 Current Pattern: {pattern_name}
 Todays Date and Time: {dates.datetime_to_string(datetime.now())}
 Current Directory: {os.curdir}
+Current User / Me: {os.getenv("ME")}
 {pattern}
     """
