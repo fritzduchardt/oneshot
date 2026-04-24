@@ -1,5 +1,4 @@
 {% macro general() %}
-- For single quotes, use this character: '
 - Make sure not to add trailing white spaces to lines
 - When changing existing file (those with FILENAME information):
     - ensure that output also contains FILENAME information.

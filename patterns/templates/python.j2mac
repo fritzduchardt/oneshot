@@ -1,5 +1,11 @@
 {% macro python() %}
-- follow python code conventions
-- start private methods with _
-- Prefer double quotes to single quotes
+## PYTHON SYNTAX
+- Start private methods with _
+- Use double quotes
+- Use build in types instead of objects from typing
+- Break arguments of function calls with more than 5 arguments into multiple lines
+- Use f-strings for string interpolation
+- Use logging module not logger
+- Add type definitions
+- Add two empty lines between functions
 {% endmacro %}
