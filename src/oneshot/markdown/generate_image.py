@@ -38,6 +38,8 @@ async def generate_food_images(
         cur_pattern = ingreds_pattern if image.endswith("ingredients.png") else final_pattern
         tasks.append(generate_image(image, cur_pattern, md, md_file_path, str_output))
 
+    await asyncio.gather(*tasks)
+
 
 async def generate_image(image: str, cur_pattern: str, md: str, md_file_path: str, str_output: StrOutputParser):
     logging.info(f"Generating image: {image}")
