@@ -8,4 +8,5 @@
 - Use logging module not logger
 - Add type definitions
 - Add two empty lines between functions
+- Place private functions underneath the methods that use them
 {% endmacro %}
