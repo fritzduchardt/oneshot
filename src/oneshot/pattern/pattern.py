@@ -16,6 +16,24 @@ def get_pattern(path: str, pattern: str) -> str | None:
         logging.error(f"Error: File '{pattern_path}' not found")
         return None
 
+
+def grep_pattern(path: str, term: str) -> str:
+    # first round prefix match
+    for p in Path(path).iterdir():
+        if p.name.startswith(term):
+            return p.name
+    # second round general match
+    for p in Path(path).iterdir():
+        if term in p.name:
+            return p.name
+    # third count text contains
+    for p in Path(path).iterdir():
+        if term in p.read_text():
+            return p.name
+
+    return ""
+
+
 def delete_pattern(path: str, pattern: str) -> bool:
     pattern_path = f"{path}/{pattern}"
     try:

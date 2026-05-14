@@ -54,6 +54,18 @@ def completion():
         else:
             pattern_name = "general"
 
+    if pattern_name == "grep":
+        if ':' in prompt:
+            term = prompt.split(':', 1)[0]
+        elif ' ' in prompt:
+            term = prompt.split(' ', 1)[0]
+        else:
+            term = prompt
+        if not (pattern_name := pattern.grep_pattern(pattern_dir, term)):
+            logging.info("Grep pattern not found")
+            pattern_name = "general"
+        logging.info(f"Grep pattern: {pattern_name}")
+
     markdown_file_content = ""
     if markdown_path:
         if markdown_path == "weaviate":

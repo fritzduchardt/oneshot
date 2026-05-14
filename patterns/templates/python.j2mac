@@ -3,7 +3,7 @@
 - Start private methods with _
 - Use double quotes
 - Use build in types instead of objects from typing
-- Break arguments of function calls with more than 5 arguments into multiple lines
+- Break arguments of function definitions or calls with more than 5 arguments into multiple lines
 - Use f-strings for string interpolation
 - Use logging module not logger
 - Add type definitions
