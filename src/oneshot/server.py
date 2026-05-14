@@ -56,15 +56,18 @@ def completion():
 
     if pattern_name == "grep":
         if ":" in prompt:
-            term = prompt.split(":", 1)[0].strip()
+            parts = prompt.split(":", 1)
+            term = parts[0].strip()
+            prompt = parts[1].strip()
         elif " " in prompt:
-            term = prompt.split(" ", 1)[0].strip()
+            parts = prompt.split(" ", 1)
+            term = parts[0].strip()
+            prompt = parts[1].strip()
         else:
             term = prompt.strip()
         if not (pattern_name := pattern.grep_pattern(pattern_dir, term)):
             logging.info("Grep pattern not found")
             pattern_name = "general"
-        logging.info(f"Grep pattern: {pattern_name}")
 
     markdown_file_content = ""
     if markdown_path:

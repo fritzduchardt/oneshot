@@ -18,17 +18,16 @@ def get_pattern(path: str, pattern: str) -> str | None:
 
 
 def grep_pattern(path: str, term: str) -> str:
-    # first round prefix match
+    matches = [p.name for p in Path(path).iterdir() if p.name.startswith(term)]
+    if matches:
+        return min(matches,key=len)
+
+    matches = [p.name for p in Path(path).iterdir() if term in p.name]
+    if matches:
+        return min(matches,key=len)
+
     for p in Path(path).iterdir():
-        if p.name.startswith(term):
-            return p.name
-    # second round general match
-    for p in Path(path).iterdir():
-        if term in p.name:
-            return p.name
-    # third count text contains
-    for p in Path(path).iterdir():
-        if term in p.read_text():
+        if term in (p / Path("system.md")).read_text():
             return p.name
 
     return ""
