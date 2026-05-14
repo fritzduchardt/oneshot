@@ -23,7 +23,7 @@ def render_jinja2_templates(output_path: str, pattern_paths_set: set[str]) -> No
 
     # files
     context: dict = {
-        "recipes": get_files_in_dir(os.getenv('OS_MARKDOWN_BASE_DIR'), os.getenv('OS_MARKDOWN_VAULT_DIR_2')),
+        "recipes": get_files_in_dir(os.getenv("OS_MARKDOWN_BASE_DIR"), os.getenv("OS_MARKDOWN_VAULT_DIR_2")),
     }
     # Walk through all files
     for path in pattern_paths_set:
@@ -34,7 +34,7 @@ def render_jinja2_templates(output_path: str, pattern_paths_set: set[str]) -> No
             files = [f for f in files if not f.startswith(".")]
 
             for filename in files:
-                if not filename.endswith('.j2'):
+                if not filename.endswith(".j2"):
                     logging.info(f"Skipping: {filename}")
                     continue
 
@@ -49,24 +49,27 @@ def render_jinja2_templates(output_path: str, pattern_paths_set: set[str]) -> No
 
                 # Polymorphism
                 if "<POLYMORPH>" in rendered:
-                    orig_line = [line for line in rendered.splitlines() if "<POLYMORPH>" not in line]
-                    if orig_line:
-                        line = orig_line[0].replace("<POLYMORPH>", "")
-                        topics = [s.strip() for s in ",".split(line)]
+                    logging.info(f"Found <POLYMORPH> in {full_path}")
+                    # Find lines that contain POLYMORPH marker (these define the topic list)
+                    polymorph_lines = [line for line in rendered.splitlines() if "<POLYMORPH>" in line]
+                    if polymorph_lines:
+                        # Take first polymorph line and extract topic list from it
+                        line = polymorph_lines[0].replace("<POLYMORPH>", "").strip()
+                        topics = [s.strip() for s in line.split(",")]
                         if topics:
                             for topic in topics:
-                                rendered = rendered.replace(f"{line}\n", "")
-                                rendered = rendered.replace("<TOPIC>", topic)
-                                # Write output (strip .j2 extension)
-                                out_file = output_path / Path(f"{rel_path.parent}-topic") / Path("system.md")
+                                topic_rendered = rendered.replace(f"{polymorph_lines[0]}\n", "")
+                                topic_rendered = topic_rendered.replace("<TOPIC>", topic)
+                                # Write output (strip .j2 extension), one file per topic
+                                out_file = output_path / Path(f"{rel_path.parent}_{topic}") / Path("system.md")
+                                logging.info(f"Create polymorphic pattern {out_file}")
                                 out_file.parent.mkdir(parents=True, exist_ok=True)
-                                out_file.write_text(rendered)
+                                out_file.write_text(topic_rendered)
                 else:
                     # Write output (strip .j2 extension)
-                    out_file = output_path / str(rel_path).removesuffix('.j2')
+                    out_file = output_path / str(rel_path).removesuffix(".j2")
                     out_file.parent.mkdir(parents=True, exist_ok=True)
                     out_file.write_text(rendered)
-
 
 
 def get_files_in_dir(base_path: str, dir_path: str) -> list[str]:
