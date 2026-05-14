@@ -11,8 +11,8 @@ from urllib.request import urlretrieve
 
 from ..pattern import pattern
 
-chat_model = ChatOpenAI(model="gpt-5.4")
-dalle = DallEAPIWrapper(model="dall-e-3")
+chat_model = ChatOpenAI(model="gpt-5.5")
+dalle = DallEAPIWrapper(model="gpt-image-2")
 
 def extract_images(md: str) -> list[str]:
     regex = r'\!\[\]\((.*)\)'

@@ -3,6 +3,7 @@ import logging
 import os.path
 from pathlib import Path
 from . import generate_image
+from .. import server
 
 def list_files(path: str) -> list[str]:
     if not os.path.exists(path):
@@ -44,6 +45,7 @@ def save_markdown(md, path, pattern_config_pattern_dir):
         with open(f"{path}", "w") as f:
             f.write(md.strip())
         asyncio.run(generate_image.generate_food_images(md, path, pattern_config_pattern_dir))
+        server.publish(f"File: {path} stored")
         return True
     except OSError as e:
         logging.error(f"Failed to write markdown to '{path}'")

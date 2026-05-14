@@ -1,9 +1,12 @@
+import json
 import logging
 import os
+import queue
 import shutil
+from datetime import time
 from pathlib import Path
 
-from flask import Flask, request, send_file, abort
+from flask import Flask, request, send_file, abort, Response
 
 from .ai import ai_utils
 from .pattern import pattern
@@ -30,6 +33,27 @@ if not load_dotenv(os.getenv("OS_CONFIG_ENV_FILE")):
 from .markdown import markdown
 
 app = Flask(__name__)
+subscribers = []
+
+
+@app.route("/stream")
+def stream():
+    def event_stream():
+        q = queue.Queue()
+        subscribers.append(q)
+        try:
+            while True:
+                data = q.get()
+                yield f"event: update\ndata: {json.dumps(data)}\n\n"
+        except GeneratorExit:
+            subscribers.remove(q)
+    return Response(event_stream(), mimetype="text/event-stream")
+
+
+def publish(msg):
+    logging.info(f"Publishing message: {msg}")
+    for q in subscribers:
+        q.put({'message': msg, 'ts': time.time()})
 
 
 @app.route("/completion", methods=["POST"])
@@ -229,6 +253,7 @@ def get_image(image_path: str):
         return abort(404)
     logging.info(f"Sending image: {image_path}")
     return send_file(image_path, mimetype="image/jpeg")
+
 
 
 @app.after_request
