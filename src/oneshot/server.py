@@ -49,18 +49,18 @@ def completion():
     if pattern_name == "weaviate":
         resp = ai_utils.call_weaviate(weaviate_host, weaviate_port, weaviate_grpc_host, weaviate_grpc_port, "PatternFile", prompt)
         if resp:
-            logging.info(f"Weaviate found pattern: {resp[0].properties.get("path")}")
+            logging.info(f"Weaviate found pattern: {resp[0].properties.get('path')}")
             pattern_name = Path(resp[0].properties["path"]).parent.name
         else:
             pattern_name = "general"
 
     if pattern_name == "grep":
-        if ':' in prompt:
-            term = prompt.split(':', 1)[0]
-        elif ' ' in prompt:
-            term = prompt.split(' ', 1)[0]
+        if ":" in prompt:
+            term = prompt.split(":", 1)[0].strip()
+        elif " " in prompt:
+            term = prompt.split(" ", 1)[0].strip()
         else:
-            term = prompt
+            term = prompt.strip()
         if not (pattern_name := pattern.grep_pattern(pattern_dir, term)):
             logging.info("Grep pattern not found")
             pattern_name = "general"

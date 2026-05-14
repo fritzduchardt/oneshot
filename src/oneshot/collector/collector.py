@@ -53,6 +53,7 @@ def filter_dirs(dirs: list[str]) -> list[str]:
             and not d.startswith("__") \
             and not d.startswith("node_modules") \
             and not d.startswith("dist") \
+            and not d.startswith("build") \
         ]
 
 def search_file(path: str, pattern) -> str:
