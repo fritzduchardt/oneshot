@@ -3,17 +3,17 @@ import logging
 import os
 import queue
 import shutil
-from datetime import time
 from pathlib import Path
 
+from dotenv import load_dotenv
 from flask import Flask, request, send_file, abort, Response
 
 from .ai import ai_utils
 from .pattern import pattern
 from .pattern import render
+from .message_queue import q
 from .social import telegram
 from .utils import fileutils
-from dotenv import load_dotenv
 
 log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
@@ -33,27 +33,21 @@ if not load_dotenv(os.getenv("OS_CONFIG_ENV_FILE")):
 from .markdown import markdown
 
 app = Flask(__name__)
-subscribers = []
 
 
 @app.route("/stream")
 def stream():
     def event_stream():
-        q = queue.Queue()
-        subscribers.append(q)
         try:
             while True:
-                data = q.get()
-                yield f"event: update\ndata: {json.dumps(data)}\n\n"
-        except GeneratorExit:
-            subscribers.remove(q)
+                try:
+                    data = q.get(timeout=1)
+                    yield f"event: update\ndata: {json.dumps(data)}\n\n"
+                except queue.Empty:
+                    yield ": keep-alive\n\n"
+        except GeneratorExit as e:
+            logging.error(e)
     return Response(event_stream(), mimetype="text/event-stream")
-
-
-def publish(msg):
-    logging.info(f"Publishing message: {msg}")
-    for q in subscribers:
-        q.put({'message': msg, 'ts': time.time()})
 
 
 @app.route("/completion", methods=["POST"])
@@ -106,7 +100,7 @@ def completion():
                 5,
             )
             for obj in resp:
-                weaviate_path = str(obj.properties['path']).removeprefix(base_path + "/")
+                weaviate_path = str(obj.properties["path"]).removeprefix(base_path + "/")
                 logging.info(f"Weaviate found markdown: {weaviate_path}")
                 markdown_file_content += f"FILENAME: {weaviate_path}\n"
                 markdown_file_content += f"{obj.properties['content']}\n\n"
@@ -235,7 +229,7 @@ def telegram_send():
     while os.getenv(f"OS_MARKDOWN_VAULT_DIR_{count}"):
         url_path = url_path.replace(os.getenv(f"OS_MARKDOWN_VAULT_DIR_{count}"), "")
         count = count + 1
-    url_path = url_path.replace('.md', '.html')
+    url_path = url_path.replace(".md", ".html")
     logging.info(f"Sharing path: {url_path}")
     try:
         telegram.send(f"https://yummy.duchardt.net/{url_path}", os.getenv("TELEGRAM_BOT_TOKEN"), os.getenv("TELEGRAM_CHAT_ID"))
@@ -253,7 +247,6 @@ def get_image(image_path: str):
         return abort(404)
     logging.info(f"Sending image: {image_path}")
     return send_file(image_path, mimetype="image/jpeg")
-
 
 
 @app.after_request

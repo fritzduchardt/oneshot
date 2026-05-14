@@ -1,18 +1,23 @@
-import asyncio
+import base64
 import logging
 import re
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
-from urllib.request import urlretrieve
+from openai import OpenAI
+from openai.types.images_response import ImagesResponse
 
+from ..message_queue import q
 from ..pattern import pattern
 
 chat_model = ChatOpenAI(model="gpt-5.5")
-dalle = DallEAPIWrapper(model="gpt-image-2")
+openai_client = OpenAI()
+
+_image_executor = ThreadPoolExecutor(max_workers=4)
+
 
 def extract_images(md: str) -> list[str]:
     regex = r'\!\[\]\((.*)\)'
@@ -23,7 +28,8 @@ def extract_images(md: str) -> list[str]:
         res.append(s)
     return res
 
-async def generate_food_images(
+
+def generate_food_images(
     md: str,
     md_file_path: str,
     pattern_config_pattern_dir,
@@ -33,15 +39,20 @@ async def generate_food_images(
     images = extract_images(md)
     str_output = StrOutputParser()
 
-    tasks = []
     for image in images:
         cur_pattern = ingreds_pattern if image.endswith("ingredients.png") else final_pattern
-        tasks.append(generate_image(image, cur_pattern, md, md_file_path, str_output))
+        # Submit image generation as fire and forget task to thread pool
+        _image_executor.submit(
+            generate_image,
+            image,
+            cur_pattern,
+            md,
+            md_file_path,
+            str_output,
+        )
 
-    await asyncio.gather(*tasks)
 
-
-async def generate_image(image: str, cur_pattern: str, md: str, md_file_path: str, str_output: StrOutputParser):
+def generate_image(image: str, cur_pattern: str, md: str, md_file_path: str, str_output: StrOutputParser):
     logging.info(f"Generating image: {image}")
     prompt = ChatPromptTemplate(
         [
@@ -51,11 +62,14 @@ async def generate_image(image: str, cur_pattern: str, md: str, md_file_path: st
     )
 
     chain = prompt | chat_model | str_output
-    image_prompt = await chain.ainvoke({"md": md})
+    image_prompt = chain.invoke({"md": md})
     logging.info(f"Image prompt: {image_prompt}")
 
-    image_url = await asyncio.to_thread(dalle.run, image_prompt)
-    logging.info(f"Image url: {image_url}")
-    output_path = f"{Path(md_file_path).parent}/{image}"
+    response: ImagesResponse = openai_client.images.generate(
+        model="gpt-image-2",
+        prompt=image_prompt,
+    )
+    output_path = Path(f"{Path(md_file_path).parent}/{image}")
     logging.info(f"Image output path: {output_path}")
-    await asyncio.to_thread(urlretrieve, image_url, output_path)
+    output_path.write_bytes(base64.b64decode(response.data[0].b64_json))
+    q.put({"message": f"Saved: {Path(md_file_path).name}/{image}"})

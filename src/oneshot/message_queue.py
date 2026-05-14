@@ -1,3 +1,3 @@
 import queue
 
-queue = queue.Queue()
+q = queue.Queue()
