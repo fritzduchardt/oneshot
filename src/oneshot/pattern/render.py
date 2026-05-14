@@ -47,10 +47,27 @@ def render_jinja2_templates(output_path: str, pattern_paths_set: set[str]) -> No
                 logging.info(f"Rendering: {full_path}")
                 rendered = template.render(**context)
 
-                # Write output (strip .j2 extension)
-                out_file = output_path / str(rel_path).removesuffix('.j2')
-                out_file.parent.mkdir(parents=True, exist_ok=True)
-                out_file.write_text(rendered)
+                # Polymorphism
+                if "<POLYMORPH>" in rendered:
+                    orig_line = [line for line in rendered.splitlines() if "<POLYMORPH>" not in line]
+                    if orig_line:
+                        line = orig_line[0].replace("<POLYMORPH>", "")
+                        topics = [s.strip() for s in ",".split(line)]
+                        if topics:
+                            for topic in topics:
+                                rendered = rendered.replace(f"{line}\n", "")
+                                rendered = rendered.replace("<TOPIC>", topic)
+                                # Write output (strip .j2 extension)
+                                out_file = output_path / Path(f"{rel_path.parent}-topic") / Path("system.md")
+                                out_file.parent.mkdir(parents=True, exist_ok=True)
+                                out_file.write_text(rendered)
+                else:
+                    # Write output (strip .j2 extension)
+                    out_file = output_path / str(rel_path).removesuffix('.j2')
+                    out_file.parent.mkdir(parents=True, exist_ok=True)
+                    out_file.write_text(rendered)
+
+
 
 def get_files_in_dir(base_path: str, dir_path: str) -> list[str]:
     root_dir = f"{base_path}/{dir_path}"
