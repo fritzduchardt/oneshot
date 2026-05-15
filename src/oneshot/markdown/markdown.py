@@ -20,14 +20,9 @@ def list_files(path: str) -> list[str]:
     return res
 
 
-def get_md(path: str) -> str | None:
-    try:
-        with open(path) as f:
-            return f.read()
-    except FileNotFoundError:
-        logging.error(f"Error: File '{path}' not found")
-        return None
-
+def get_md(path: str) -> str:
+    md = Path(path).read_text()
+    return f"FILENAME: {path}\n\n{md}"
 
 def delete_md(path: str) -> bool:
     try:
@@ -41,14 +36,15 @@ def delete_md(path: str) -> bool:
         return False
 
 
-def save_markdown(md, path, pattern_config_pattern_dir):
+def save_markdown(md, base_path, path, pattern_config_pattern_dir):
     try:
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        logging.info(f"Saving markdown file: {path}")
-        with open(f"{path}", "w") as f:
+        full_path = f"{base_path}/{path}"
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+        logging.info(f"Saving markdown file: {full_path}")
+        with open(f"{full_path}", "w") as f:
             f.write(md.strip())
-        generate_image.generate_food_images(md, path, pattern_config_pattern_dir)
+        generate_image.generate_food_images(md, base_path, path, pattern_config_pattern_dir)
         return True
     except OSError as e:
-        logging.error(f"Failed to write markdown to '{path}'")
+        logging.error(f"Failed to write markdown to '{full_path}'")
         return False

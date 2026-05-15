@@ -216,7 +216,7 @@ def markdown_store():
     md = data["markdown"]
     base_path = os.getenv("OS_MARKDOWN_BASE_DIR")
     pattern_config_pattern_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
-    if markdown.save_markdown(md, f"{base_path}/{path}", pattern_config_pattern_dir):
+    if markdown.save_markdown(md, base_path, path, pattern_config_pattern_dir):
         return "OK"
     return "Failure"
 
