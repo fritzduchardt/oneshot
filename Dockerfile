@@ -3,7 +3,7 @@ FROM python:3.14.3-slim
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app/src
-ENV PORT=8080
+ENV PORT=8000
 
 WORKDIR /app
 
@@ -17,6 +17,6 @@ RUN pip install --no-cache-dir --upgrade pip \
 
 USER oneshot
 
-EXPOSE 8080
+EXPOSE 8000
 
-ENTRYPOINT ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT} --timeout 300 --keep-alive 300 oneshot.server:app"]
+ENTRYPOINT ["python3", "-m", "src.oneshot.server"]
