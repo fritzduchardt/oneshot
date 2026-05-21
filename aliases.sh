@@ -25,4 +25,5 @@ alias md=model_deepseek
 alias mk=model_grok
 alias mkc=model_grok_code
 alias mm=model_mistral
-alias mi=model_gemini
+alias mip=model_gemini_pro
+alias mif=model_gemini_flash

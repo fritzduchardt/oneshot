@@ -106,6 +106,14 @@ model_grok() {
   export DEFAULT_MODEL=grok-4-0709
 }
 
+model_gemini_flash() {
+  export DEFAULT_MODEL=gemini-3.5-flash
+}
+
+model_gemini_pro() {
+  export DEFAULT_MODEL=gemini-3.5-pro
+}
+
 model() {
   echo $DEFAULT_MODEL
 }

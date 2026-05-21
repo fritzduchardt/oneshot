@@ -95,9 +95,9 @@ def list_models() -> list[str]:
         "grok-4-0709",
     ]
 
-    filtered_models = [m for m in models if m.startswith(tuple(filter_prefixes))]
-    filtered_models = [m for m in filtered_models if not any(word in m for word in blacklisted_words)]
-    return [m for m in filtered_models if m not in blacklisted_models]
+    # filtered_models = [m for m in models if m.startswith(tuple(filter_prefixes))]
+    # filtered_models = [m for m in filtered_models if not any(word in m for word in blacklisted_words)]
+    return [m for m in models if m not in blacklisted_models]
 
 
 def count_tokens(text: str) -> int:

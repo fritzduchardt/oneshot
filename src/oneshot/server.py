@@ -246,7 +246,6 @@ def get_image(image_path: str):
     image_path = f"{base_path}/{image_path}"
     if not Path(image_path).exists():
         return abort(404)
-    logging.info(f"Sending image: {image_path}")
     return send_file(image_path, mimetype="image/jpeg")
 
 
