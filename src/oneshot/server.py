@@ -102,15 +102,15 @@ def completion():
             for obj in resp:
                 weaviate_path = str(obj.properties["path"]).removeprefix(base_path + "/")
                 logging.info(f"Weaviate found markdown: {weaviate_path}")
-                markdown_file_content += f"FILENAME: {weaviate_path}\n"
+                markdown_path = weaviate_path
                 markdown_file_content += f"{obj.properties['content']}\n\n"
         else:
             markdown_file_content = Path(f"{base_path}/{markdown_path}").read_text()
 
     if markdown_file_content:
-        markdown_file_content = f"Journal Files:\n\n{markdown_file_content}"
+        markdown_file_content = f"Journal File: {markdown_path}\n\n{markdown_file_content}"
 
-    return ai_utils.complete(
+    llm_response = ai_utils.complete(
         pattern_dir,
         pattern_name,
         markdown_file_content,
@@ -122,6 +122,7 @@ def completion():
         weaviate_grpc_host,
         weaviate_grpc_port,
     )
+    return llm_response
 
 
 @app.route("/patterns/names")

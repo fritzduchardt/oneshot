@@ -103,8 +103,8 @@ def _create_llm(model: str, max_output_tokens: int) -> BaseChatModel:
         )
     else:
         ret = init_chat_model(model)
-    if max_output_tokens > 0:
-        ret.max_tokens = max_output_tokens
+        if max_output_tokens > 0:
+            ret.max_tokens = max_output_tokens
     return ret
 
 

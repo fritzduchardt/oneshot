@@ -41,10 +41,10 @@ def save_markdown(md, base_path, path, pattern_config_pattern_dir):
         full_path = f"{base_path}/{path}"
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
         logging.info(f"Saving markdown file: {full_path}")
-        with open(f"{full_path}", "w") as f:
-            f.write(md.strip())
-        generate_image.generate_food_images(md, base_path, path, pattern_config_pattern_dir)
+        Path(full_path).write_text(md)
+        if "/Food/" in full_path:
+            generate_image.generate_food_images(md, base_path, path, pattern_config_pattern_dir)
         return True
-    except OSError as e:
+    except BaseException as e:
         logging.error(f"Failed to write markdown to '{full_path}'")
         return False
