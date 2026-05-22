@@ -111,7 +111,7 @@ model_gemini_flash() {
 }
 
 model_gemini_pro() {
-  export DEFAULT_MODEL=gemini-3.5-pro
+  export DEFAULT_MODEL=gemini-3.1-pro-preview
 }
 
 model() {

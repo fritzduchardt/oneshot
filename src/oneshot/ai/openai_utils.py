@@ -5,10 +5,7 @@ import os
 import mcp
 import mcp.client
 from mcp.client.streamable_http import streamable_http_client
-from mcp.types import CallToolResult
 from openai import OpenAI
-from openai.types.responses import ResponseApplyPatchToolCall, ResponseApplyPatchToolCallOutput, ResponseCodeInterpreterToolCall, ResponseCompactionItem, ResponseComputerToolCall, ResponseCustomToolCall, ResponseFileSearchToolCall, ResponseFunctionShellToolCall, ResponseFunctionShellToolCallOutput, ResponseFunctionToolCall, ResponseFunctionWebSearch, ResponseOutputMessage, ResponseReasoningItem, ResponseToolSearchCall, ResponseToolSearchOutputItem
-from openai.types.responses.response_output_item import ImageGenerationCall, LocalShellCall, McpApprovalRequest, McpCall, McpListTools
 
 
 def list_models() -> list[str]:
