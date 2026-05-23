@@ -3,6 +3,7 @@ import logging
 import os
 import warnings
 
+
 warnings.filterwarnings(
     "ignore",
     message=r".*Core Pydantic V1 functionality isn't compatible with Python 3\.14 or greater.*",
@@ -12,14 +13,40 @@ warnings.filterwarnings(
 
 from langchain.agents import create_agent
 from langchain_mcp_adapters.client import MultiServerMCPClient
+from langchain_mcp_adapters.callbacks import Callbacks, CallbackContext
 from langchain.chat_models import init_chat_model, BaseChatModel
 from langchain_google_genai import ChatGoogleGenerativeAI
 from . import ai_utils
+from ..message_queue import q
 
 MAX_INPUT_TOKENS_MCP = 20000
 MAX_INPUT_TOKENS_CLI = 200000
 MAX_OUTPUT_TOKENS_MCP = 20000
 MAX_OUTPUT_TOKENS_CLI = -1
+
+async def progress_handler(
+        progress: float,
+        total: float | None,
+        message: str | None,
+        context: CallbackContext,
+) -> None:
+    if total:
+        pct = (progress / total) * 100
+        logging.info(f"[{context.tool_name}] {pct:.1f}% - {message}")
+
+
+async def log_handler(
+        params,
+        context: CallbackContext,
+) -> None:
+    logging.info(f"Notification from: {context.tool_name}\n{params.data}")
+    data = {
+        "message": params.data,
+        "basepath": "",
+        "image": "",
+    }
+    q.put(data)
+
 
 client = MultiServerMCPClient(
     {
@@ -31,7 +58,11 @@ client = MultiServerMCPClient(
             "transport": "http",
             "url": f"{os.environ.get('MCP_URL_FINCLAW')}/mcp",
         },
-    }
+    },
+    callbacks=Callbacks(
+        on_logging_message=log_handler,
+        on_progress=progress_handler,
+    ),
 )
 
 

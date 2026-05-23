@@ -23,4 +23,5 @@ EXPOSE 8000
 # Use gevent worker class to prevent SSE connections from blocking other requests
 # gevent provides cooperative multitasking so long-lived SSE connections don't starve the worker
 # workers=1 with gevent handles many concurrent connections via greenlets
-ENTRYPOINT ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT} --timeout 300 --keep-alive 300 --worker-class gevent --worker-connections 1000 --workers 1 oneshot.server:app"]
+#ENTRYPOINT ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT} --timeout 300 --keep-alive 300 --worker-class gevent --worker-connections 1000 --workers 1 oneshot.server:app"]
+ENTRYPOINT ["python", "-m", "oneshot.server"]
