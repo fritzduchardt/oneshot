@@ -59,10 +59,6 @@ client = MultiServerMCPClient(
             "url": f"{os.environ.get('MCP_URL_FINCLAW')}/mcp",
         },
     },
-    callbacks=Callbacks(
-        on_logging_message=log_handler,
-        on_progress=progress_handler,
-    ),
 )
 
 
