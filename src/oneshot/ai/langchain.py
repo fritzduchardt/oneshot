@@ -54,10 +54,6 @@ client = MultiServerMCPClient(
             "transport": "http",
             "url": f"{os.environ.get('MCP_URL_ONESHOT')}/mcp",
         },
-        "finclaw": {
-            "transport": "http",
-            "url": f"{os.environ.get('MCP_URL_FINCLAW')}/mcp",
-        },
     },
 )
 
