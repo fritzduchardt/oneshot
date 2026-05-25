@@ -5,22 +5,21 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+from PIL import Image
 from google import genai
 from google.genai import types
-from PIL import Image
-
-from langchain_anthropic import ChatAnthropic
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 
+from ..ai.ai_utils import get_deepseek_v4_flash
 from ..message_queue import q
 from ..pattern import pattern
 
-CHAT_MODEL_NAME = os.getenv("CHAT_MODEL", "claude-sonnet-4-6")
 # imagen-4.0-ultra-generate-001
 # imagen-4.0-generate-001
 # imagen-4.0-fast-generate-001
 IMAGE_MODEL_NAME = os.getenv("IMAGE_MODEL", "imagen-4.0-ultra-generate-001")
+IMAGE_PROMPT_MODEL_NAME = os.getenv("IMAGE_PROMPT_MODEL", "deepseek-v4-pro")
 
 _image_executor = ThreadPoolExecutor(max_workers=4)
 
@@ -77,8 +76,11 @@ def generate_image(
             ]
         )
 
-        chat_model = _get_chat_model()
-        chain = prompt | chat_model | str_output
+        if IMAGE_PROMPT_MODEL_NAME == "deepseek-v4-pro":
+            prompt_model = get_deepseek_v4_flash()
+        else:
+            raise RuntimeError(f"Unknown image model: {IMAGE_PROMPT_MODEL_NAME}")
+        chain = prompt | prompt_model | str_output
         image_prompt = chain.invoke({"md": md})
 
         client = _get_genai_client()
@@ -93,26 +95,21 @@ def generate_image(
         )
         output_path = Path(f"{base_path}/{Path(path).parent}/{image}")
         for generated_image in response.generated_images:
-            image_bytes = generated_image.image.image_bytes
+            image_bytes: bytes | None = generated_image.image.image_bytes
             image_obj = Image.open(io.BytesIO(image_bytes))
             image_obj.save(output_path.as_posix())
             print("Image successfully saved to disk.")
 
         #![](recipename-ingredients.png, e.g. lentil-patties-ingredients.png)
-        msg = f"{image_prompt}\n\n![]({image})"
+        msg = f"---\nmodel: {IMAGE_PROMPT_MODEL_NAME}\n---\n{image_prompt}\n\n![]({image})"
         data = {
             "message": msg,
             "basepath": str(Path(path).parent),
             "image": image,
         }
-        logging.info(f"Sending message: {data}")
         q.put(data)
     except BaseException as e:
         logging.error("Failed during image generation: %s", e, exc_info=True)
-
-
-def _get_chat_model() -> ChatAnthropic:
-    return ChatAnthropic(model=CHAT_MODEL_NAME)
 
 
 def _get_genai_client() -> genai.Client:

@@ -10,6 +10,10 @@ from . import anthropic_utils as anthropic
 from . import deepseek_utils, gemini_utils, openai_utils, xai_utils
 from . import langchain as lc
 from ..pattern import pattern as p
+from langchain_anthropic import ChatAnthropic
+from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_deepseek import ChatDeepSeek
 
 
 def complete(pattern_dir: str, pattern_name: str, stdin: str, prompt: str, model: str, with_mcp: bool, weaviate_host: str, weaviate_port: int, weaviate_grpc_host: str, weaviate_grpc_port: int) -> str:
@@ -106,3 +110,49 @@ def count_tokens(text: str) -> int:
     encoding = tiktoken.get_encoding("o200k_base")
 
     return len(encoding.encode(text))
+
+
+
+# Anthropic 4 Sonnet: Input $3/1M tokens, Output $15/1M tokens
+def get_sonnet() -> ChatAnthropic:
+    return ChatAnthropic(model="claude-sonnet-4-6")
+
+
+# Anthropic 4 Haiku: Input $1/1M tokens, Output $5/1M tokens
+def get_haiku() -> ChatAnthropic:
+    return ChatAnthropic(model="claude-haiku-4-6")
+
+
+# Anthropic 4 Opus: Input $5/1M tokens, Output $25/1M tokens
+def get_opus() -> ChatAnthropic:
+    return ChatAnthropic(model="claude-opus-4-6")
+
+
+# OpenAI GPT 5.5: Input $5/1M tokens, Output $30/1M tokens
+def get_gpt5_5() -> ChatOpenAI:
+    return ChatOpenAI(model="gpt-5.5")
+
+
+# OpenAI GPT 5.4: Input $2.5/1M tokens, Output $15/1M tokens
+def get_gpt5_4() -> ChatOpenAI:
+    return ChatOpenAI(model="gpt-5.4")
+
+
+# Gemini 3 Pro: Input $2/1M tokens, Output $12/1M tokens
+def get_gemini_pro() -> ChatGoogleGenerativeAI:
+    return ChatGoogleGenerativeAI(model="gemini-3.1-pro-preview")
+
+
+# Gemini 3 Flash: Input $1.5/1M tokens, Output $9/1M tokens
+def get_gemini_flash() -> ChatGoogleGenerativeAI:
+    return ChatGoogleGenerativeAI(model="gemini-3.5-flash")
+
+
+# DeepSeek V4 Flash: Input $0.028/1M tokens, Output $0.87/1M tokens
+def get_deepseek_v4_flash() -> ChatDeepSeek:
+    return ChatDeepSeek(model="deepseek-v4-flash")
+
+
+# DeepSeek V4 Pro: Input $0.43/1M tokens, Output $0.87/1M tokens
+def get_deepseek_v4_pro() -> ChatDeepSeek:
+    return ChatDeepSeek(model="deepseek-v4-pro")

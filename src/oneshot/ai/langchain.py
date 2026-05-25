@@ -32,14 +32,14 @@ async def progress_handler(
 ) -> None:
     if total:
         pct = (progress / total) * 100
-        logging.info(f"[{context.tool_name}] {pct:.1f}% - {message}")
+        logging.debug(f"[{context.tool_name}] {pct:.1f}% - {message}")
 
 
 async def log_handler(
         params,
         context: CallbackContext,
 ) -> None:
-    logging.info(f"Notification from: {context.tool_name}\n{params.data}")
+    logging.debug(f"Notification from: {context.tool_name}\n{params.data}")
     data = {
         "message": params.data,
         "basepath": "",
