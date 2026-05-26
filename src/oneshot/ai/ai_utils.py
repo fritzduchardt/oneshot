@@ -112,20 +112,9 @@ def count_tokens(text: str) -> int:
     return len(encoding.encode(text))
 
 
-
-# Anthropic 4 Sonnet: Input $3/1M tokens, Output $15/1M tokens
-def get_sonnet() -> ChatAnthropic:
-    return ChatAnthropic(model="claude-sonnet-4-6")
-
-
-# Anthropic 4 Haiku: Input $1/1M tokens, Output $5/1M tokens
-def get_haiku() -> ChatAnthropic:
-    return ChatAnthropic(model="claude-haiku-4-6")
-
-
 # Anthropic 4 Opus: Input $5/1M tokens, Output $25/1M tokens
-def get_opus() -> ChatAnthropic:
-    return ChatAnthropic(model="claude-opus-4-6")
+def get_anthropic(model: str) -> ChatAnthropic:
+    return ChatAnthropic(model=model)
 
 
 # OpenAI GPT 5.5: Input $5/1M tokens, Output $30/1M tokens
@@ -149,10 +138,5 @@ def get_gemini_flash() -> ChatGoogleGenerativeAI:
 
 
 # DeepSeek V4 Flash: Input $0.028/1M tokens, Output $0.87/1M tokens
-def get_deepseek_v4_flash() -> ChatDeepSeek:
-    return ChatDeepSeek(model="deepseek-v4-flash")
-
-
-# DeepSeek V4 Pro: Input $0.43/1M tokens, Output $0.87/1M tokens
-def get_deepseek_v4_pro() -> ChatDeepSeek:
-    return ChatDeepSeek(model="deepseek-v4-pro")
+def get_deepseek(model: str) -> ChatDeepSeek:
+    return ChatDeepSeek(model=model)

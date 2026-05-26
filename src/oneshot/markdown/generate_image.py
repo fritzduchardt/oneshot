@@ -11,7 +11,7 @@ from google.genai import types
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 
-from ..ai.ai_utils import get_deepseek_v4_flash
+from ..ai.ai_utils import get_deepseek, get_anthropic
 from ..message_queue import q
 from ..pattern import pattern
 
@@ -19,7 +19,8 @@ from ..pattern import pattern
 # imagen-4.0-generate-001
 # imagen-4.0-fast-generate-001
 IMAGE_MODEL_NAME = os.getenv("IMAGE_MODEL", "imagen-4.0-ultra-generate-001")
-IMAGE_PROMPT_MODEL_NAME = os.getenv("IMAGE_PROMPT_MODEL", "deepseek-v4-pro")
+# IMAGE_PROMPT_MODEL_NAME = os.getenv("IMAGE_PROMPT_MODEL", "deepseek-v4-pro")
+IMAGE_PROMPT_MODEL_NAME = os.getenv("IMAGE_PROMPT_MODEL", "claude-opus-4-7")
 
 _image_executor = ThreadPoolExecutor(max_workers=4)
 
@@ -76,8 +77,10 @@ def generate_image(
             ]
         )
 
-        if IMAGE_PROMPT_MODEL_NAME == "deepseek-v4-pro":
-            prompt_model = get_deepseek_v4_flash()
+        if IMAGE_PROMPT_MODEL_NAME.startswith("deepseek"):
+            prompt_model = get_deepseek(IMAGE_PROMPT_MODEL_NAME)
+        elif IMAGE_PROMPT_MODEL_NAME.startswith("claude"):
+            prompt_model = get_anthropic(IMAGE_PROMPT_MODEL_NAME)
         else:
             raise RuntimeError(f"Unknown image model: {IMAGE_PROMPT_MODEL_NAME}")
         chain = prompt | prompt_model | str_output
