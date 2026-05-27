@@ -104,7 +104,7 @@ def generate_image(
             print("Image successfully saved to disk.")
 
         #![](recipename-ingredients.png, e.g. lentil-patties-ingredients.png)
-        msg = f"---\nmodel: {IMAGE_PROMPT_MODEL_NAME}\n---\n{image_prompt}\n\n![]({image})"
+        msg = f"---\nmodel: {IMAGE_PROMPT_MODEL_NAME}\npattern: {cur_pattern}---\n{image_prompt}\n\n![]({image})"
         data = {
             "message": msg,
             "basepath": str(Path(path).parent),
