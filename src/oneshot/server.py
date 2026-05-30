@@ -262,6 +262,4 @@ if __name__ == "__main__":
     app.run(
         host="0.0.0.0",
         port=int(os.getenv("PORT", "8000")),
-        # set read and write timeouts to 300s to support long-running AI completions
-        timeout=300,
     )
