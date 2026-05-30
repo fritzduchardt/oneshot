@@ -28,5 +28,8 @@ EXPOSE 8000
 # --keep-alive 300 keeps HTTP connections alive for 5 minutes to support persistent MCP sessions
 # --worker-connections 1000 allows up to 1000 concurrent greenlet-based connections per worker
 # --forwarded-allow-ips * ensures correct IP forwarding when behind a reverse proxy
-ENTRYPOINT ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT} --timeout 0 --keep-alive 300 --worker-class geventwebsocket.gunicorn.workers.GeventWebSocketWorker --worker-connections 1000 --workers 1 --forwarded-allow-ips '*' oneshot.server:app"]
+# --proxy-allow-from * accepts proxy headers from any upstream proxy to avoid 502/504 gateway timeouts
+# --proxy-protocol enables PROXY protocol support so upstream load balancers can pass real connection info
+# Sending periodic keepalive data and using gevent prevents upstream proxy 504 gateway timeout errors
+ENTRYPOINT ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT} --timeout 300 --keep-alive 300 --worker-class geventwebsocket.gunicorn.workers.GeventWebSocketWorker --worker-connections 1000 --workers 1 --forwarded-allow-ips '*' --proxy-allow-from '*' oneshot.server:app"]
 #ENTRYPOINT ["python", "-m", "oneshot.server"]
