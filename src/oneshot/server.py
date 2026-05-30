@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import os
@@ -6,12 +7,14 @@ import shutil
 from pathlib import Path
 
 from dotenv import load_dotenv
-from flask import Flask, request, send_file, abort, Response
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, StreamingResponse
+from pydantic import BaseModel
 
 from .ai import ai_utils
+from .message_queue import q
 from .pattern import pattern
 from .pattern import render
-from .message_queue import q
 from .social import telegram
 from .utils import fileutils
 
@@ -21,9 +24,9 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
-logging.getLogger("werkzeug").setLevel(logging.ERROR)
 logging.getLogger("httpx").setLevel(logging.ERROR)
 logging.getLogger("mcp.client.streamable_http").setLevel(logging.ERROR)
+logging.getLogger("uvicorn.access").setLevel(logging.ERROR)
 
 
 if not load_dotenv(os.getenv("OS_CONFIG_ENV_FILE")):
@@ -32,38 +35,56 @@ if not load_dotenv(os.getenv("OS_CONFIG_ENV_FILE")):
 # import after env file was loaded
 from .markdown import markdown
 
-app = Flask(__name__)
-app.config["TIMEOUT"] = 300
+app = FastAPI()
+
+READ_TIMEOUT = 300
 
 
-@app.route("/stream")
-def stream():
-    def event_stream():
+class CompletionRequest(BaseModel):
+    markdown: str | None = None
+    with_mcp: bool = False
+    message: str
+    pattern: str
+    model: str
+
+
+class MarkdownStoreRequest(BaseModel):
+    path: str
+    markdown: str
+
+
+class TelegramSendRequest(BaseModel):
+    markdown: str
+
+
+@app.get("/stream")
+async def stream():
+    async def event_stream():
         try:
             while True:
                 try:
-                    data = q.get(timeout=1)
+                    data = q.get_nowait()
                     yield f"event: update\ndata: {json.dumps(data)}\n\n"
                 except queue.Empty:
                     yield ": keep-alive\n\n"
-        except GeneratorExit as e:
-            logging.error(e)
-    return Response(event_stream(), mimetype="text/event-stream")
+                    await asyncio.sleep(1)
+        except asyncio.CancelledError:
+            pass
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
-@app.route("/completion", methods=["POST"])
-def completion():
-    data = request.get_json()
+@app.post("/completion")
+async def completion(body: CompletionRequest):
     pattern_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
     base_path = os.getenv("OS_MARKDOWN_BASE_DIR")
-    markdown_path = data["markdown"]
-    with_mcp = data["with_mcp"]
+    markdown_path = body.markdown
+    with_mcp = body.with_mcp
     weaviate_host = os.getenv("WEAVIATE_HOST", "localhost")
     weaviate_port = os.getenv("WEAVIATE_PORT", 80)
     weaviate_grpc_host = os.getenv("WEAVIATE_GRPC_HOST", "localhost")
     weaviate_grpc_port = os.getenv("WEAVIATE_GRPC_PORT", 50051)
-    prompt = data["message"]
-    pattern_name = data["pattern"]
+    prompt = body.message
+    pattern_name = body.pattern
 
     if pattern_name == "weaviate":
         resp = ai_utils.call_weaviate(weaviate_host, weaviate_port, weaviate_grpc_host, weaviate_grpc_port, "PatternFile", prompt)
@@ -116,7 +137,7 @@ def completion():
         pattern_name,
         markdown_file_content,
         prompt,
-        data["model"],
+        body.model,
         with_mcp,
         weaviate_host,
         weaviate_port,
@@ -126,35 +147,35 @@ def completion():
     return llm_response
 
 
-@app.route("/patterns/names")
-def pattern_names():
+@app.get("/patterns/names")
+async def pattern_names():
     pattern_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
     logging.info(f"Listing patterns in: {pattern_dir}")
     patterns = pattern.list_patterns(pattern_dir)
     return patterns
 
 
-@app.route("/patterns/<name>")
-def get_pattern(name: str):
+@app.get("/patterns/{name}")
+async def get_pattern(name: str):
     pattern_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
     return pattern.get_pattern(pattern_dir, name)
 
 
-@app.route("/patterns/<name>", methods=["DELETE"])
-def delete_pattern(name: str):
+@app.delete("/patterns/{name}")
+async def delete_pattern(name: str):
     pattern_dir = os.getenv("OS_PATTERN_TEMPLATE_DIR")
     if pattern.delete_pattern(pattern_dir, name):
         return "OK"
     return "Failure"
 
 
-@app.route("/models/names")
-def model_names():
+@app.get("/models/names")
+async def model_names():
     return ai_utils.list_models()
 
 
-@app.route("/patterns/generate", methods=["POST"])
-def generate_patterns():
+@app.post("/patterns/generate")
+async def generate_patterns():
     output_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
     sync_pattern_dir = os.getenv("OS_SYNC_PATTERN_DIR")
     pattern_dir_1 = os.getenv("OS_PATTERN_TEMPLATE_DIR")
@@ -172,8 +193,8 @@ def generate_patterns():
     return "OK"
 
 
-@app.route("/markdown/paths")
-def markdown_paths():
+@app.get("/markdown/paths")
+async def markdown_paths():
     paths: list[str] = []
     count: int = 1
     base_path = os.getenv("OS_MARKDOWN_BASE_DIR")
@@ -186,8 +207,8 @@ def markdown_paths():
     return paths
 
 
-@app.route("/markdown/<path:file_path>")
-def get_markdown(file_path:str):
+@app.get("/markdown/{file_path:path}")
+async def get_markdown(file_path: str):
     base_path = os.getenv("OS_MARKDOWN_BASE_DIR")
     md_path = f"{base_path}/{file_path}"
     if not Path(md_path).exists():
@@ -199,23 +220,22 @@ def get_markdown(file_path:str):
             found = True
             break
         if not found:
-            abort(404)
+            raise HTTPException(status_code=404)
     return markdown.get_md(md_path)
 
 
-@app.route("/markdown/<path:file_path>", methods=["DELETE"])
-def delete_markdown(file_path:str):
+@app.delete("/markdown/{file_path:path}")
+async def delete_markdown(file_path: str):
     base_path = os.getenv("OS_MARKDOWN_BASE_DIR")
     if markdown.delete_md(f"{base_path}/{file_path}"):
         return "OK"
     return "Failure"
 
 
-@app.route("/markdown/store", methods=["POST"])
-def markdown_store():
-    data = request.get_json()
-    path = data["path"]
-    md = data["markdown"]
+@app.post("/markdown/store")
+async def markdown_store(body: MarkdownStoreRequest):
+    path = body.path
+    md = body.markdown
     base_path = os.getenv("OS_MARKDOWN_BASE_DIR")
     pattern_config_pattern_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
     if markdown.save_markdown(md, base_path, path, pattern_config_pattern_dir):
@@ -223,10 +243,9 @@ def markdown_store():
     return "Failure"
 
 
-@app.route("/telegram/send", methods=["POST"])
-def telegram_send():
-    data = request.get_json()
-    url_path = data["markdown"]
+@app.post("/telegram/send")
+async def telegram_send(body: TelegramSendRequest):
+    url_path = body.markdown
     count: int = 1
     while os.getenv(f"OS_MARKDOWN_VAULT_DIR_{count}"):
         url_path = url_path.replace(os.getenv(f"OS_MARKDOWN_VAULT_DIR_{count}"), "")
@@ -241,17 +260,18 @@ def telegram_send():
         return "Failure"
 
 
-@app.route("/image/<path:image_path>")
-def get_image(image_path: str):
+@app.get("/image/{image_path:path}")
+async def get_image(image_path: str):
     base_path = os.getenv("OS_MARKDOWN_BASE_DIR")
-    image_path = f"{base_path}/{image_path}"
-    if not Path(image_path).exists():
-        return abort(404)
-    return send_file(image_path, mimetype="image/jpeg")
+    full_image_path = f"{base_path}/{image_path}"
+    if not Path(full_image_path).exists():
+        raise HTTPException(status_code=404)
+    return FileResponse(full_image_path, media_type="image/jpeg")
 
 
-@app.after_request
-def add_cors_headers(response):
+@app.middleware("http")
+async def add_cors_headers(request: Request, call_next):
+    response = await call_next(request)
     response.headers["Access-Control-Allow-Origin"] = "*"
     response.headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,DELETE,OPTIONS"
     response.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
@@ -259,7 +279,10 @@ def add_cors_headers(response):
 
 
 if __name__ == "__main__":
-    app.run(
+    import uvicorn
+    uvicorn.run(
+        app,
         host="0.0.0.0",
         port=int(os.getenv("PORT", "8000")),
+        timeout_keep_alive=READ_TIMEOUT,
     )
