@@ -8,7 +8,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse, PlainTextResponse
 from pydantic import BaseModel
 
 from .ai import ai_utils
@@ -37,7 +37,7 @@ from .markdown import markdown
 
 app = FastAPI()
 
-READ_TIMEOUT = 300
+READ_TIMEOUT = 600
 
 
 class CompletionRequest(BaseModel):
@@ -144,7 +144,7 @@ async def completion(body: CompletionRequest):
         weaviate_grpc_host,
         weaviate_grpc_port,
     )
-    return llm_response
+    return PlainTextResponse(content=llm_response)
 
 
 @app.get("/patterns/names")
@@ -152,26 +152,27 @@ async def pattern_names():
     pattern_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
     logging.info(f"Listing patterns in: {pattern_dir}")
     patterns = pattern.list_patterns(pattern_dir)
-    return patterns
+    return JSONResponse(content=patterns)
 
 
 @app.get("/patterns/{name}")
 async def get_pattern(name: str):
     pattern_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
-    return pattern.get_pattern(pattern_dir, name)
+    # return plain text to avoid quoting
+    return PlainTextResponse(content=pattern.get_pattern(pattern_dir, name))
 
 
 @app.delete("/patterns/{name}")
 async def delete_pattern(name: str):
     pattern_dir = os.getenv("OS_PATTERN_TEMPLATE_DIR")
     if pattern.delete_pattern(pattern_dir, name):
-        return "OK"
-    return "Failure"
+        return PlainTextResponse(content="OK")
+    return PlainTextResponse(content="Failure")
 
 
 @app.get("/models/names")
 async def model_names():
-    return ai_utils.list_models()
+    return JSONResponse(content=ai_utils.list_models())
 
 
 @app.post("/patterns/generate")
@@ -190,7 +191,7 @@ async def generate_patterns():
         logging.info(f"Syncing patterns in {sync_pattern_dir}")
         fileutils.clear_directory_contents(sync_pattern_dir)
         shutil.copytree(output_dir, sync_pattern_dir, dirs_exist_ok=True)
-    return "OK"
+    return PlainTextResponse(content="OK")
 
 
 @app.get("/markdown/paths")
@@ -204,7 +205,7 @@ async def markdown_paths():
         count = count + 1
     # trim base_path
     paths = [path.replace(f"{base_path}/", "") for path in paths]
-    return paths
+    return JSONResponse(content=paths)
 
 
 @app.get("/markdown/{file_path:path}")
@@ -221,15 +222,16 @@ async def get_markdown(file_path: str):
             break
         if not found:
             raise HTTPException(status_code=404)
-    return markdown.get_md(md_path)
+    content = markdown.get_md(md_path)
+    return PlainTextResponse(content=content)
 
 
 @app.delete("/markdown/{file_path:path}")
 async def delete_markdown(file_path: str):
     base_path = os.getenv("OS_MARKDOWN_BASE_DIR")
     if markdown.delete_md(f"{base_path}/{file_path}"):
-        return "OK"
-    return "Failure"
+        return PlainTextResponse(content="OK")
+    return PlainTextResponse(content="Failure")
 
 
 @app.post("/markdown/store")
@@ -239,8 +241,8 @@ async def markdown_store(body: MarkdownStoreRequest):
     base_path = os.getenv("OS_MARKDOWN_BASE_DIR")
     pattern_config_pattern_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
     if markdown.save_markdown(md, base_path, path, pattern_config_pattern_dir):
-        return "OK"
-    return "Failure"
+        return PlainTextResponse(content="OK")
+    return PlainTextResponse(content="Failure")
 
 
 @app.post("/telegram/send")
@@ -254,10 +256,10 @@ async def telegram_send(body: TelegramSendRequest):
     logging.info(f"Sharing path: {url_path}")
     try:
         telegram.send(f"https://yummy.duchardt.net/{url_path}", os.getenv("TELEGRAM_BOT_TOKEN"), os.getenv("TELEGRAM_CHAT_ID"))
-        return "OK"
+        return PlainTextResponse(content="OK")
     except Exception as e:
         logging.error(e)
-        return "Failure"
+        return PlainTextResponse(content="Failure")
 
 
 @app.get("/image/{image_path:path}")
@@ -271,6 +273,12 @@ async def get_image(image_path: str):
 
 @app.middleware("http")
 async def add_cors_headers(request: Request, call_next):
+    if request.method == "OPTIONS":
+        response = PlainTextResponse("OK", status_code=200)
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,DELETE,OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
+        return response
     response = await call_next(request)
     response.headers["Access-Control-Allow-Origin"] = "*"
     response.headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,DELETE,OPTIONS"
