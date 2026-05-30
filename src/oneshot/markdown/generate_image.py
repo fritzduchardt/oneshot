@@ -115,5 +115,6 @@ def generate_image(
         logging.error("Failed during image generation: %s", e, exc_info=True)
 
 
+
 def _get_genai_client() -> genai.Client:
     return genai.Client()

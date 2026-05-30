@@ -33,6 +33,7 @@ if not load_dotenv(os.getenv("OS_CONFIG_ENV_FILE")):
 from .markdown import markdown
 
 app = Flask(__name__)
+app.config["TIMEOUT"] = 300
 
 
 @app.route("/stream")
@@ -258,4 +259,9 @@ def add_cors_headers(response):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT", "8000")))
+    app.run(
+        host="0.0.0.0",
+        port=int(os.getenv("PORT", "8000")),
+        # set read and write timeouts to 300s to support long-running AI completions
+        timeout=300,
+    )
