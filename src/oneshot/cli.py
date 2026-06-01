@@ -1,5 +1,4 @@
-import warnings
-
+import asyncio
 import json
 import logging
 import os
@@ -85,7 +84,7 @@ def shoot(
     if prompt:
         prompt_str = " ".join(prompt)
 
-    llm_resp = ai_utils.complete(
+    llm_resp: str = asyncio.run(ai_utils.complete(
         pattern_dir,
         pattern_name,
         stdin,
@@ -96,7 +95,7 @@ def shoot(
         weaviate_port,
         weaviate_grpc_host,
         weaviate_grpc_port,
-    )
+    ))
 
     if output_to_disk:
         generator.write_to_disk(llm_resp)

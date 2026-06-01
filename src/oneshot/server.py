@@ -1,8 +1,10 @@
+import ast
 import asyncio
 import json
 import logging
 import os
 import queue
+import re
 import shutil
 from pathlib import Path
 
@@ -11,6 +13,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse, PlainTextResponse
 from pydantic import BaseModel
 
+from src.oneshot.ai.langchain import call_ai_only_tools
 from .ai import ai_utils
 from .message_queue import q
 from .pattern import pattern
@@ -48,6 +51,12 @@ class CompletionRequest(BaseModel):
     model: str
 
 
+class ChartRequest(BaseModel):
+    pattern: str
+    model: str
+    message: str
+
+
 class MarkdownStoreRequest(BaseModel):
     path: str
     markdown: str
@@ -71,6 +80,14 @@ async def stream():
         except asyncio.CancelledError:
             pass
     return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
+@app.post("/chart")
+def chart(body: ChartRequest):
+    pattern_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
+    result = asyncio.run(call_ai_only_tools(body.model, pattern.get_pattern(pattern_dir, body.pattern), body.message, "create_chart", ))
+    data = ast.literal_eval(result)
+    return PlainTextResponse(content=data[0]["text"])
 
 
 @app.post("/completion")
@@ -132,7 +149,7 @@ async def completion(body: CompletionRequest):
     if markdown_file_content:
         markdown_file_content = f"Journal File: {markdown_path}\n\n{markdown_file_content}"
 
-    llm_response = ai_utils.complete(
+    llm_response = await ai_utils.complete(
         pattern_dir,
         pattern_name,
         markdown_file_content,

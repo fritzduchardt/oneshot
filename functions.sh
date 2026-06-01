@@ -83,11 +83,11 @@ model_claude() {
 }
 
 model_claude_opus() {
-  export DEFAULT_MODEL=claude-opus-4-6
+  export DEFAULT_MODEL=claude-opus-4-8
 }
 
 model_claude_haiku() {
-  export DEFAULT_MODEL=claude-haiku-4-5
+  export DEFAULT_MODEL=claude-haiku-4-5-20251001
 }
 
 model_chatgpt5() {

@@ -85,8 +85,6 @@ async def call_ai_with_tools(model: str, pattern: str, prompt: str) -> str:
         llm = _create_llm(model, MAX_OUTPUT_TOKENS_MCP)
         messages = _create_messages(pattern, prompt)
 
-        _validate_token_count(llm, messages, MAX_INPUT_TOKENS_MCP)
-
         agent = create_agent(
             model=llm,
             tools=available_tools,
@@ -98,10 +96,30 @@ async def call_ai_with_tools(model: str, pattern: str, prompt: str) -> str:
         logging.info(f"Input tokens: {response['messages'][-1].usage_metadata['input_tokens']}")
         logging.info(f"Output tokens: {response['messages'][-1].usage_metadata['output_tokens']}")
         return response["messages"][-1].text
-    except ValueError as e:
-        logging.warning(f"Token limit exceeded, interrupting before agent execution: {e}")
-        return str(e)
     except Exception as e:
+        logging.exception(f"Failure to call MCP Server or LLM: {e}")
+        return "Failed on call to MCP Server and / or LLM. Check logs"
+
+
+async def call_ai_only_tools(model: str, pattern_content: str, prompt: str, tool_name: str) -> str | None:
+    try:
+        available_tools = await client.get_tools()
+        logging.info(f"Available tools: {available_tools}")
+        llm = _create_llm(model, MAX_OUTPUT_TOKENS_MCP)
+        # bind only the requested tool so the llm is forced to call it
+        matching_tools = [tool for tool in available_tools if tool.name == tool_name]
+        llm_with_tools = llm.bind_tools(matching_tools)
+        messages = _create_messages(pattern_content, f"Use tool call to: {tool_name} in order to: {prompt}")
+
+        response = await llm_with_tools.ainvoke(messages)
+
+        for call in response.tool_calls:
+            for tool in matching_tools:
+                if tool.name == tool_name:
+                    result = await tool.ainvoke(call["args"])
+                    return str(result)
+        return f"Tool not found: {tool_name}"
+    except BaseException as e:
         logging.exception(f"Failure to call MCP Server or LLM: {e}")
         return "Failed on call to MCP Server and / or LLM. Check logs"
 
@@ -118,6 +136,7 @@ def _validate_token_count(llm, messages, token_count) -> None:
     if estimated_tokens is None:
         estimated_tokens = ai_utils.count_tokens(json.dumps(messages))
 
+    logging.info(f"Estimated tokens: {estimated_tokens}")
     if estimated_tokens > token_count:
         raise ValueError(
             f"Interrupting before execution: estimated input tokens {estimated_tokens} exceed limit {token_count}."

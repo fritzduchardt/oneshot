@@ -16,7 +16,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_deepseek import ChatDeepSeek
 
 
-def complete(pattern_dir: str, pattern_name: str, stdin: str, prompt: str, model: str, with_mcp: bool, weaviate_host: str, weaviate_port: int, weaviate_grpc_host: str, weaviate_grpc_port: int) -> str:
+async def complete(pattern_dir: str, pattern_name: str, stdin: str, prompt: str, model: str, with_mcp: bool, weaviate_host: str, weaviate_port: int, weaviate_grpc_host: str, weaviate_grpc_port: int) -> str:
     pattern_content = p.get_pattern(pattern_dir, pattern_name)
     if not pattern_content:
         return ""
@@ -25,7 +25,7 @@ def complete(pattern_dir: str, pattern_name: str, stdin: str, prompt: str, model
     logging.info(f"Using pattern: {pattern_name}")
 
     if with_mcp:
-        llm_resp = asyncio.run(lc.call_ai_with_tools(model, p.create_complete_pattern(model, pattern_name, pattern_content), p.create_complete_prompt(prompt, stdin)))
+        llm_resp = await lc.call_ai_with_tools(model, p.create_complete_pattern(model, pattern_name, pattern_content), p.create_complete_prompt(prompt, stdin))
     else:
         llm_resp = lc.call_ai(model, p.create_complete_pattern(model, pattern_name, pattern_content), p.create_complete_prompt(prompt, stdin))
 
