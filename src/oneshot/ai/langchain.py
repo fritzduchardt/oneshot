@@ -74,9 +74,11 @@ def call_ai(model: str, pattern: str, prompt: str) -> str:
     _validate_token_count(llm, messages, MAX_INPUT_TOKENS_CLI)
 
     response = llm.invoke(messages)
+    response_text = response.text.strip()
+    response_text = ai_utils.clean_llm_response(response_text)
     logging.info(f"Input tokens: {response.usage_metadata['input_tokens']}")
     logging.info(f"Output tokens: {response.usage_metadata['output_tokens']}")
-    return response.text
+    return response_text
 
 
 async def call_ai_with_tools(model: str, pattern: str, prompt: str) -> str:

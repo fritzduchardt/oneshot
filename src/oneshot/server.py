@@ -4,9 +4,9 @@ import json
 import logging
 import os
 import queue
-import re
 import shutil
 from pathlib import Path
+from typing import Any
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
@@ -55,6 +55,7 @@ class ChartRequest(BaseModel):
     pattern: str
     model: str
     message: str
+    markdown: str | None = None
 
 
 class MarkdownStoreRequest(BaseModel):
@@ -83,11 +84,21 @@ async def stream():
 
 
 @app.post("/chart")
-def chart(body: ChartRequest):
+async def chart(body: ChartRequest):
     pattern_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
-    result = asyncio.run(call_ai_only_tools(body.model, pattern.get_pattern(pattern_dir, body.pattern), body.message, "create_chart", ))
-    data = ast.literal_eval(result)
-    return PlainTextResponse(content=data[0]["text"])
+    pattern_name, prompt = _grep_pattern(pattern_dir, body.pattern, body.message)
+    pattern_content = pattern.get_pattern(pattern_dir, pattern_name)
+    base_path = os.getenv("OS_MARKDOWN_BASE_DIR")
+    if body.markdown:
+        markdown_file_content = Path(f"{base_path}/{body.markdown}").read_text()
+        markdown_file_content = f"Journal File: {body.markdown}\n\n{markdown_file_content}"
+        prompt = pattern.create_complete_prompt(prompt, markdown_file_content)
+    result = await call_ai_only_tools(body.model, pattern.create_complete_pattern(body.model, body.pattern, pattern_content), prompt, "create_chart", )
+    try:
+        data = ast.literal_eval(result)
+        return PlainTextResponse(content=data[0]["text"])
+    except:
+        return PlainTextResponse(content=f"---\npattern: {pattern_name}\n---\n{result}")
 
 
 @app.post("/completion")
@@ -111,20 +122,7 @@ async def completion(body: CompletionRequest):
         else:
             pattern_name = "general"
 
-    if pattern_name == "grep":
-        if ":" in prompt:
-            parts = prompt.split(":", 1)
-            term = parts[0].strip()
-            prompt = parts[1].strip()
-        elif " " in prompt:
-            parts = prompt.split(" ", 1)
-            term = parts[0].strip()
-            prompt = parts[1].strip()
-        else:
-            term = prompt.strip()
-        if not (pattern_name := pattern.grep_pattern(pattern_dir, term)):
-            logging.info("Grep pattern not found")
-            pattern_name = "general"
+    pattern_name, prompt = _grep_pattern(pattern_dir, pattern_name, prompt)
 
     markdown_file_content = ""
     if markdown_path:
@@ -162,6 +160,24 @@ async def completion(body: CompletionRequest):
         weaviate_grpc_port,
     )
     return PlainTextResponse(content=llm_response)
+
+
+def _grep_pattern(pattern_dir: str | Any, pattern_name: str, prompt: str) -> tuple[str, str]:
+    if pattern_name == "grep":
+        if ":" in prompt:
+            parts = prompt.split(":", 1)
+            term = parts[0].strip()
+            prompt = parts[1].strip()
+        elif " " in prompt:
+            parts = prompt.split(" ", 1)
+            term = parts[0].strip()
+            prompt = parts[1].strip()
+        else:
+            term = prompt.strip()
+        if not (pattern_name := pattern.grep_pattern(pattern_dir, term)):
+            logging.info("Grep pattern not found")
+            pattern_name = "general"
+    return pattern_name, prompt
 
 
 @app.get("/patterns/names")

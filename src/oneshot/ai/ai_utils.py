@@ -1,8 +1,12 @@
-import asyncio
 import logging
+import re
 from typing import Any
 
 import weaviate
+from langchain_anthropic import ChatAnthropic
+from langchain_deepseek import ChatDeepSeek
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
 from weaviate.collections.classes.internal import Object
 from weaviate.connect import ConnectionParams
 
@@ -10,10 +14,6 @@ from . import anthropic_utils as anthropic
 from . import deepseek_utils, gemini_utils, openai_utils, xai_utils
 from . import langchain as lc
 from ..pattern import pattern as p
-from langchain_anthropic import ChatAnthropic
-from langchain_openai import ChatOpenAI
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_deepseek import ChatDeepSeek
 
 
 async def complete(pattern_dir: str, pattern_name: str, stdin: str, prompt: str, model: str, with_mcp: bool, weaviate_host: str, weaviate_port: int, weaviate_grpc_host: str, weaviate_grpc_port: int) -> str:
@@ -79,7 +79,6 @@ def list_models() -> list[str]:
         "deepseek",
     ]
     blacklisted_words = [
-        "codex",
         "gpt-5.1",
         "gpt-5.2",
         "gpt-5.3",
@@ -140,3 +139,14 @@ def get_gemini_flash() -> ChatGoogleGenerativeAI:
 # DeepSeek V4 Flash: Input $0.028/1M tokens, Output $0.87/1M tokens
 def get_deepseek(model: str) -> ChatDeepSeek:
     return ChatDeepSeek(model=model)
+
+
+def clean_llm_response(response: str) -> str:
+    """
+        Removes starting and trailing code block description from response
+    """
+    if response.startswith("```"):
+        response = re.sub(r"^```[^\n]*\n", "", response)
+    if response.endswith("```"):
+        response = re.sub(r"\n```$", "", response)
+    return response

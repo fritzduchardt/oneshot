@@ -95,7 +95,7 @@ model_chatgpt5() {
 }
 
 model_chatgpt5_codex() {
-  export DEFAULT_MODEL=gpt-5.3-codex
+  export DEFAULT_MODEL=gpt-5-codex
 }
 
 model_grok_code() {
@@ -112,6 +112,14 @@ model_gemini_flash() {
 
 model_gemini_pro() {
   export DEFAULT_MODEL=gemini-3.1-pro-preview
+}
+
+model_deepseek_flash() {
+  export DEFAULT_MODEL=deepseek-v4-flash
+}
+
+model_deepseek_pro() {
+  export DEFAULT_MODEL=deepseek-v4-pro
 }
 
 model() {
