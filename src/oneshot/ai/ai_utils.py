@@ -145,6 +145,7 @@ def clean_llm_response(response: str) -> str:
     """
         Removes starting and trailing code block description from response
     """
+    response = response.strip()
     if response.startswith("```"):
         response = re.sub(r"^```[^\n]*\n", "", response)
     if response.endswith("```"):
