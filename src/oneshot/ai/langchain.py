@@ -114,7 +114,8 @@ async def call_ai_only_tools(model: str, pattern_content: str, prompt: str, tool
         messages = _create_messages(pattern_content, f"Use tool call to: {tool_name} in order to: {prompt}")
 
         response = await llm_with_tools.ainvoke(messages)
-
+        logging.info(f"Input tokens: {response.usage_metadata["input_tokens"]}")
+        logging.info(f"Output tokens: {response.usage_metadata["output_tokens"]}")
         for call in response.tool_calls:
             for tool in matching_tools:
                 if tool.name == tool_name:
