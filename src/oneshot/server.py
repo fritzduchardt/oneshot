@@ -50,7 +50,6 @@ class CompletionRequest(BaseModel):
     pattern: str
     model: str
 
-
 class ChartRequest(BaseModel):
     pattern: str
     model: str
@@ -103,63 +102,73 @@ async def chart(body: ChartRequest):
 
 @app.post("/completion")
 async def completion(body: CompletionRequest):
-    pattern_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
-    base_path = os.getenv("OS_MARKDOWN_BASE_DIR")
-    markdown_path = body.markdown
-    with_mcp = body.with_mcp
-    weaviate_host = os.getenv("WEAVIATE_HOST", "localhost")
-    weaviate_port = os.getenv("WEAVIATE_PORT", 80)
-    weaviate_grpc_host = os.getenv("WEAVIATE_GRPC_HOST", "localhost")
-    weaviate_grpc_port = os.getenv("WEAVIATE_GRPC_PORT", 50051)
-    prompt = body.message
-    pattern_name = body.pattern
+    try:
+        pattern_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
+        base_path = os.getenv("OS_MARKDOWN_BASE_DIR")
+        markdown_path = body.markdown
+        with_mcp = body.with_mcp
+        weaviate_host = os.getenv("WEAVIATE_HOST", "localhost")
+        weaviate_port = os.getenv("WEAVIATE_PORT", 80)
+        weaviate_grpc_host = os.getenv("WEAVIATE_GRPC_HOST", "localhost")
+        weaviate_grpc_port = os.getenv("WEAVIATE_GRPC_PORT", 50051)
+        prompt = body.message
+        pattern_name = body.pattern
 
-    if pattern_name == "weaviate":
-        resp = ai_utils.call_weaviate(weaviate_host, weaviate_port, weaviate_grpc_host, weaviate_grpc_port, "PatternFile", prompt)
-        if resp:
-            logging.info(f"Weaviate found pattern: {resp[0].properties.get('path')}")
-            pattern_name = Path(resp[0].properties["path"]).parent.name
-        else:
-            pattern_name = "general"
+        pattern_name, prompt = _grep_pattern(pattern_dir, pattern_name, prompt)
+        if pattern_name == "weaviate":
+            resp = ai_utils.call_weaviate(weaviate_host, weaviate_port, weaviate_grpc_host, weaviate_grpc_port, "PatternFile", prompt)
+            if resp:
+                logging.info(f"Weaviate found pattern: {resp[0].properties.get('path')}")
+                pattern_name = Path(resp[0].properties["path"]).parent.name
+            else:
+                pattern_name = "general"
 
-    pattern_name, prompt = _grep_pattern(pattern_dir, pattern_name, prompt)
+        pattern_content = pattern.get_pattern(pattern_dir, pattern_name)
 
-    markdown_file_content = ""
-    if markdown_path:
-        if markdown_path == "weaviate":
-            resp = ai_utils.call_weaviate(
-                weaviate_host,
-                weaviate_port,
-                weaviate_grpc_host,
-                weaviate_grpc_port,
-                "ObsidianFile",
-                prompt,
-                5,
-            )
-            for obj in resp:
-                weaviate_path = str(obj.properties["path"]).removeprefix(base_path + "/")
-                logging.info(f"Weaviate found markdown: {weaviate_path}")
-                markdown_path = weaviate_path
-                markdown_file_content += f"{obj.properties['content']}\n\n"
-        else:
-            markdown_file_content = Path(f"{base_path}/{markdown_path}").read_text()
+        markdown_file_content = ""
+        if markdown_path:
+            if markdown_path == "weaviate":
+                resp = ai_utils.call_weaviate(
+                    weaviate_host,
+                    weaviate_port,
+                    weaviate_grpc_host,
+                    weaviate_grpc_port,
+                    "ObsidianFile",
+                    prompt,
+                    5,
+                )
+                for obj in resp:
+                    weaviate_path = str(obj.properties["path"]).removeprefix(base_path + "/")
+                    logging.info(f"Weaviate found markdown: {weaviate_path}")
+                    markdown_path = weaviate_path
+                    markdown_file_content += f"{obj.properties['content']}\n\n"
+            else:
+                markdown_file_content = Path(f"{base_path}/{markdown_path}").read_text()
 
-    if markdown_file_content:
-        markdown_file_content = f"Journal File: {markdown_path}\n\n{markdown_file_content}"
+        if markdown_file_content:
+            markdown_file_content = f"Journal File: {markdown_path}\n\n{markdown_file_content}"
 
-    llm_response = await ai_utils.complete(
-        pattern_dir,
-        pattern_name,
-        markdown_file_content,
-        prompt,
-        body.model,
-        with_mcp,
-        weaviate_host,
-        weaviate_port,
-        weaviate_grpc_host,
-        weaviate_grpc_port,
-    )
-    return PlainTextResponse(content=llm_response)
+        if pattern_name == "prompt":
+            pattern_content = await pattern.generate_pattern_from_prompt(pattern_content, body.model, prompt, markdown_file_content)
+            logging.info(f"Generated pattern: {pattern_content}")
+
+        llm_response = await ai_utils.complete(
+            pattern_name,
+            pattern_content,
+            markdown_file_content,
+            prompt,
+            body.model,
+            with_mcp,
+            weaviate_host,
+            weaviate_port,
+            weaviate_grpc_host,
+            weaviate_grpc_port,
+        )
+        return PlainTextResponse(content=llm_response)
+    except BaseException as e:
+        msg = f"Error in {e}"
+        logging.error(msg)
+        return PlainTextResponse(content=msg)
 
 
 def _grep_pattern(pattern_dir: str | Any, pattern_name: str, prompt: str) -> tuple[str, str]:

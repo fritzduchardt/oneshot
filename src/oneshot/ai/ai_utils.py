@@ -7,6 +7,7 @@ from langchain_anthropic import ChatAnthropic
 from langchain_deepseek import ChatDeepSeek
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
+from langchain_xai import ChatXAI
 from weaviate.collections.classes.internal import Object
 from weaviate.connect import ConnectionParams
 
@@ -16,8 +17,7 @@ from . import langchain as lc
 from ..pattern import pattern as p
 
 
-async def complete(pattern_dir: str, pattern_name: str, stdin: str, prompt: str, model: str, with_mcp: bool, weaviate_host: str, weaviate_port: int, weaviate_grpc_host: str, weaviate_grpc_port: int) -> str:
-    pattern_content = p.get_pattern(pattern_dir, pattern_name)
+async def complete(pattern_name: str, pattern_content: str, stdin: str, prompt: str, model: str, with_mcp: bool, weaviate_host: str, weaviate_port: int, weaviate_grpc_host: str, weaviate_grpc_port: int) -> str:
     if not pattern_content:
         return ""
 
@@ -139,6 +139,41 @@ def get_gemini_flash() -> ChatGoogleGenerativeAI:
 # DeepSeek V4 Flash: Input $0.028/1M tokens, Output $0.87/1M tokens
 def get_deepseek(model: str) -> ChatDeepSeek:
     return ChatDeepSeek(model=model)
+
+
+# Generic OpenAI method
+def get_openai(model: str) -> ChatOpenAI:
+    return ChatOpenAI(model=model)
+
+
+# Generic xAI method
+def get_xai(model: str) -> ChatXAI:
+    return ChatXAI(model=model)
+
+
+# Generic Gemini method
+def get_gemini(model: str) -> ChatGoogleGenerativeAI:
+    return ChatGoogleGenerativeAI(model=model)
+
+
+def get_model(model: str) -> Any:
+    """Returns a LangChain chat model instance based on the model name string.
+
+    Delegates to specialized methods (e.g., get_gpt5_4, get_anthropic) when
+    the model matches known prefixes. Raises ValueError for unknown models.
+    """
+    logging.info(f"Getting model: {model}")
+
+    if model.startswith("gpt"):
+        return get_openai(model)
+    elif model.startswith("claude-"):
+        return get_anthropic(model)
+    elif model.startswith("gemini"):
+        return get_gemini(model)
+    elif model.startswith("deepseek"):
+        return get_deepseek(model)
+    else:
+        raise ValueError(f"Unsupported model: {model}")
 
 
 def clean_llm_response(response: str) -> str:

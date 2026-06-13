@@ -85,8 +85,8 @@ def shoot(
         prompt_str = " ".join(prompt)
 
     llm_resp: str = asyncio.run(ai_utils.complete(
-        pattern_dir,
         pattern_name,
+        p.get_pattern(pattern_dir, pattern_name),
         stdin,
         prompt_str,
         model,

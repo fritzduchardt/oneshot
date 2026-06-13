@@ -13,6 +13,7 @@ def list_models() -> list[str]:
     models = [ model.id for model in client.models.list()]
     return models
 
+
 async def call_openai(model: str, pattern: str, prompt: str) -> str:
     logging.info("Calling openai API without tools")
     client = _create_client()
@@ -128,6 +129,7 @@ def _create_client() -> OpenAI:
         api_key=os.environ.get("OPENAI_API_KEY"),
     )
     return client
+
 
 def create_messages(pattern: str, prompt: str):
     return [

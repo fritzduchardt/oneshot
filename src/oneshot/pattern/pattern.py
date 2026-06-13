@@ -3,7 +3,11 @@ import os
 import shutil
 from datetime import datetime
 from pathlib import Path
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from ..message_queue import q
 
+from ..ai import ai_utils
 from ..utils import dates
 
 
@@ -71,3 +75,32 @@ Current Directory: {os.curdir}
 Current User / Me: {os.getenv("ME")}
 {pattern}
     """
+
+
+async def generate_pattern_from_prompt(
+        prompt_pattern_content: str,
+        prompt_model: str,
+        prompt: str,
+        markdown_content: str,
+) -> str:
+    try:
+        logging.info(f"Generating custom pattern for prompt: {prompt}, with model: {prompt_model} and md: {markdown_content}")
+
+        messages = [
+            ("system", prompt_pattern_content),
+            ("human", "{md}")
+        ]
+        prompt_template = ChatPromptTemplate(messages)
+        str_output = StrOutputParser()
+        chain = prompt_template | ai_utils.get_model(prompt_model) | str_output
+        generated_prompt = chain.invoke({"md": create_complete_prompt(prompt, markdown_content)})
+
+        msg = f"---\nmodel: {prompt_model}\n---\n{generated_prompt}"
+        data = {
+            "message": msg,
+        }
+        q.put(data)
+        return generated_prompt
+    except BaseException as e:
+        logging.error("Failed during image generation: %s", e, exc_info=True)
+        raise e
