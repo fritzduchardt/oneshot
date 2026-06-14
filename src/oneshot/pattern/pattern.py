@@ -84,7 +84,7 @@ async def generate_pattern_from_prompt(
         markdown_content: str,
 ) -> str:
     try:
-        logging.info(f"Generating custom pattern for prompt: {prompt}, with model: {prompt_model} and md: {markdown_content}")
+        logging.info(f"Generating custom pattern with model: {prompt_model}")
 
         messages = [
             ("system", prompt_pattern_content),
