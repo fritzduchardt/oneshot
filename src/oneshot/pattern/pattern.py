@@ -93,11 +93,9 @@ def generate_pattern_from_prompt(
         prompt_template = ChatPromptTemplate(messages)
         str_output = StrOutputParser()
         chain = prompt_template | ai_utils.get_model(prompt_model) | str_output
-        generated_prompt = chain.invoke({"md": create_complete_prompt(prompt, markdown_content)})
-
-        msg = f"---\nmodel: {prompt_model}\ngenerated_prompt: true\n---\n{generated_prompt}"
+        generated_prompt = ai_utils.clean_llm_response(chain.invoke({"md": create_complete_prompt(prompt, markdown_content)}))
         data = {
-            "message": msg,
+            "message": generated_prompt,
         }
         q.put(data)
         return generated_prompt

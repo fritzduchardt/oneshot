@@ -150,9 +150,9 @@ def completion(body: CompletionRequest):
         if markdown_file_content:
             markdown_file_content = f"Journal File: {markdown_path}\n\n{markdown_file_content}"
 
-        if pattern_name == "prompt":
+        logging.info(f"Used pattern: {pattern_name}")
+        if pattern_name.endswith("prompt"):
             pattern_content = pattern.generate_pattern_from_prompt(pattern_content, body.model, prompt, markdown_file_content)
-            logging.info(f"Generated pattern: {pattern_content}")
 
         llm_response = asyncio.run(ai_utils.complete(
             pattern_name,
