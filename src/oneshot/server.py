@@ -5,6 +5,7 @@ import logging
 import os
 import queue
 import shutil
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
@@ -99,9 +100,10 @@ async def chart(body: ChartRequest):
     except:
         return PlainTextResponse(content=f"---\npattern: {pattern_name}\n---\n{result}")
 
+_image_executor = ThreadPoolExecutor(max_workers=4)
 
 @app.post("/completion")
-async def completion(body: CompletionRequest):
+def completion(body: CompletionRequest):
     try:
         pattern_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
         base_path = os.getenv("OS_MARKDOWN_BASE_DIR")
@@ -149,10 +151,10 @@ async def completion(body: CompletionRequest):
             markdown_file_content = f"Journal File: {markdown_path}\n\n{markdown_file_content}"
 
         if pattern_name == "prompt":
-            pattern_content = await pattern.generate_pattern_from_prompt(pattern_content, body.model, prompt, markdown_file_content)
+            pattern_content = pattern.generate_pattern_from_prompt(pattern_content, body.model, prompt, markdown_file_content)
             logging.info(f"Generated pattern: {pattern_content}")
 
-        llm_response = await ai_utils.complete(
+        llm_response = asyncio.run(ai_utils.complete(
             pattern_name,
             pattern_content,
             markdown_file_content,
@@ -163,11 +165,11 @@ async def completion(body: CompletionRequest):
             weaviate_port,
             weaviate_grpc_host,
             weaviate_grpc_port,
-        )
+        ))
         return PlainTextResponse(content=llm_response)
     except BaseException as e:
         msg = f"Error in {e}"
-        logging.error(msg)
+        logging.error(msg, exc_info=True)
         return PlainTextResponse(content=msg)
 
 

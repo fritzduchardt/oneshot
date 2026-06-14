@@ -77,7 +77,7 @@ Current User / Me: {os.getenv("ME")}
     """
 
 
-async def generate_pattern_from_prompt(
+def generate_pattern_from_prompt(
         prompt_pattern_content: str,
         prompt_model: str,
         prompt: str,
@@ -95,7 +95,7 @@ async def generate_pattern_from_prompt(
         chain = prompt_template | ai_utils.get_model(prompt_model) | str_output
         generated_prompt = chain.invoke({"md": create_complete_prompt(prompt, markdown_content)})
 
-        msg = f"---\nmodel: {prompt_model}\n---\n{generated_prompt}"
+        msg = f"---\nmodel: {prompt_model}\ngenerated_prompt: true\n---\n{generated_prompt}"
         data = {
             "message": msg,
         }
