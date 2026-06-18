@@ -43,7 +43,10 @@ def save_markdown(md, base_path, path, pattern_config_pattern_dir):
         logging.info(f"Saving markdown file: {full_path}")
         Path(full_path).write_text(md)
         if "/Food/" in full_path:
+            logging.info(f"Generating images for: {full_path}")
             generate_image.generate_food_images(md, base_path, path, pattern_config_pattern_dir)
+        else:
+            logging.info(f"Not generating images for: {full_path}")
         return True
     except BaseException as e:
         logging.error(f"Failed to write markdown to '{full_path}'")

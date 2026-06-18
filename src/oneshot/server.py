@@ -331,6 +331,7 @@ async def add_cors_headers(request: Request, call_next):
 
 
 if __name__ == "__main__":
+    asyncio.run(generate_patterns())
     import uvicorn
     uvicorn.run(
         app,

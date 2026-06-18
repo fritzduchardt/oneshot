@@ -126,4 +126,4 @@ model() {
   echo $DEFAULT_MODEL
 }
 
-model_claude
+model_gemini_flash
