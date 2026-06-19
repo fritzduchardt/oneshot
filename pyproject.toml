@@ -23,6 +23,7 @@ dependencies = [
     "langchain-xai>=1.2.2",
     "langchain-google-genai>=3.2.2",
     "langchain-deepseek>=1.0.1",
+    "langchain-nvidia-ai-endpoints>=1.4.1",
     "gunicorn>=25.1.0",
     "python-dateutil>=2.9.0.post0",
     "Pillow>=11.2.1",

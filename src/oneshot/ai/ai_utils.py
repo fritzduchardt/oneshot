@@ -11,7 +11,7 @@ from langchain_xai import ChatXAI
 from weaviate.collections.classes.internal import Object
 from weaviate.connect import ConnectionParams
 
-from . import anthropic_utils as anthropic
+from . import anthropic_utils as anthropic, nvidia_utils
 from . import deepseek_utils, gemini_utils, openai_utils, xai_utils
 from . import langchain as lc
 from ..pattern import pattern as p
@@ -69,6 +69,7 @@ def list_models() -> list[str]:
     models.extend(xai_utils.list_models())
     models.extend(gemini_utils.list_models())
     models.extend(deepseek_utils.list_models())
+    models.extend(nvidia_utils.list_models())
 
     filter_prefixes = [
         "gpt-5",

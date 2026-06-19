@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import warnings
+from langchain_nvidia_ai_endpoints import ChatNVIDIA
 
 
 warnings.filterwarnings(
@@ -154,10 +155,20 @@ def _create_llm(model: str, max_output_tokens: int) -> BaseChatModel:
             temperature=0,
             google_api_key=os.environ.get("GOOGLE_API_KEY"),
         )
+    elif model.startswith("nvidia"):
+        ret = ChatNVIDIA(
+            model=model,
+            api_key=os.environ.get("NVIDIA_API_KEY"),
+            temperature=1,
+            top_p=0.95,
+            max_tokens=16384,
+            reasoning_budget=16384,
+            chat_template_kwargs={"enable_thinking":True},
+        )
     else:
         ret = init_chat_model(model)
-        if max_output_tokens > 0:
-            ret.max_tokens = max_output_tokens
+    if max_output_tokens > 0:
+        ret.max_tokens = max_output_tokens
     return ret
 
 
