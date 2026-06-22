@@ -169,8 +169,6 @@ def get_model(model: str) -> Any:
     Delegates to specialized methods (e.g., get_gpt5_4, get_anthropic) when
     the model matches known prefixes. Raises ValueError for unknown models.
     """
-    logging.info(f"Getting model: {model}")
-
     if model.startswith("gpt"):
         return get_openai(model)
     elif model.startswith("claude-"):

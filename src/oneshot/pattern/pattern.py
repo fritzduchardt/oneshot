@@ -109,6 +109,7 @@ def generate_pattern_from_prompt(
         generated_prompt_and_metadata = f"""
         ---
         model: {prompt_model}
+        prompt: {prompt}
         ---
         {generated_prompt}
         """
