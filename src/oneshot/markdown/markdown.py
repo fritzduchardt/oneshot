@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import os.path
 from pathlib import Path
@@ -36,12 +35,16 @@ def delete_md(path: str) -> bool:
         return False
 
 
-def save_markdown(md, base_path, path, pattern_config_pattern_dir):
+def save_markdown(md: str, base_path, path, pattern_config_pattern_dir):
     try:
         full_path = f"{base_path}/{path}"
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
         logging.info(f"Saving markdown file: {full_path}")
-        Path(full_path).write_text(md)
+        clean_md = ""
+        for l in md.split("\n"):
+            if not l.strip().startswith("FILENAME:"):
+                clean_md += f"{l}\n"
+        Path(full_path).write_text(clean_md)
         if "/Food/" in full_path:
             logging.info(f"Generating images for: {full_path}")
             generate_image.generate_food_images(md, base_path, path, pattern_config_pattern_dir)

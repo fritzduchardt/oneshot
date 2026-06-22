@@ -23,13 +23,19 @@ async def complete(pattern_name: str, pattern_content: str, stdin: str, prompt: 
 
     logging.info(f"Calling model: {model}")
     logging.info(f"Using pattern: {pattern_name}")
-
+    metadata = {"pattern": pattern_name, "model": model}
     if with_mcp:
         llm_resp = await lc.call_ai_with_tools(model, p.create_complete_pattern(model, pattern_name, pattern_content), p.create_complete_prompt(prompt, stdin))
+        metadata["mcp"] = "true"
     else:
         llm_resp = lc.call_ai(model, p.create_complete_pattern(model, pattern_name, pattern_content), p.create_complete_prompt(prompt, stdin))
 
-    return llm_resp
+    metadata_str = ""
+    for k, v in metadata.items():
+        metadata_str += f"{k}: {v}\n"
+
+    llm_resp_with_metadata = f"""---\n{metadata_str}---\n{llm_resp}"""
+    return llm_resp_with_metadata
 
 
 def call_weaviate(weaviate_host: str, weaviate_port: int, weaviate_grpc_host: str, weaviate_grpc_port: int, collection: str, prompt: str, limit: int = 1) -> list[Object[Any, Any]]:

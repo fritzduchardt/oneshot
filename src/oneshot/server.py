@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import queue
+import re
 import shutil
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -148,6 +149,8 @@ def completion(body: CompletionRequest):
                 markdown_file_content = Path(f"{base_path}/{markdown_path}").read_text()
 
         if markdown_file_content:
+            # strip metadata
+            markdown_file_content = re.sub("^\s*---[\w\W\n]+?---\n", "", markdown_file_content)
             markdown_file_content = f"Journal File: {markdown_path}\n\n{markdown_file_content}"
 
         logging.info(f"Used pattern: {pattern_name}")
@@ -166,6 +169,7 @@ def completion(body: CompletionRequest):
             weaviate_grpc_host,
             weaviate_grpc_port,
         ))
+
         return PlainTextResponse(content=llm_response)
     except BaseException as e:
         msg = f"Error in {e}"
