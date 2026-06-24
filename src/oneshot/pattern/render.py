@@ -23,7 +23,7 @@ def render_jinja2_templates(output_path: str, pattern_paths_set: set[str]) -> No
 
     # files
     context: dict = {
-        "recipes": get_files_in_dir(os.getenv("OS_MARKDOWN_BASE_DIR"), os.getenv("OS_MARKDOWN_VAULT_DIR_2")),
+        "recipes": get_dirs_in_dir(os.getenv("OS_MARKDOWN_BASE_DIR"), os.getenv("OS_MARKDOWN_VAULT_DIR_2")),
     }
     # Walk through all files
     for path in pattern_paths_set:
@@ -86,5 +86,22 @@ def get_files_in_dir(base_path: str, dir_path: str) -> list[str]:
             if file.endswith(".md"):
                 file_path = os.path.join(root, file)
                 res.append(file_path.replace(f"{base_path}/", ""))
+
+    return res
+
+
+def get_dirs_in_dir(base_path: str, dir_path: str) -> list[str]:
+    root_dir = f"{base_path}/{dir_path}"
+    logging.info(f"Getting dirs in: {root_dir}")
+    res = []
+    if not os.path.exists(root_dir):
+        logging.error(f"Directory does not exist: {root_dir}")
+        return res
+
+    for root, dirs, files in os.walk(root_dir):
+        dirs[:] = [d for d in dirs if not d.startswith(".")]
+        for d in dirs:
+            dir_path = os.path.join(root, d)
+            res.append(dir_path.replace(f"{base_path}/", ""))
 
     return res
