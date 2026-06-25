@@ -23,7 +23,8 @@ def render_jinja2_templates(output_path: str, pattern_paths_set: set[str]) -> No
 
     # files
     context: dict = {
-        "recipes": get_dirs_in_dir(os.getenv("OS_MARKDOWN_BASE_DIR"), os.getenv("OS_MARKDOWN_VAULT_DIR_2")),
+        "vault1": get_dirs_in_dir(os.getenv("OS_MARKDOWN_BASE_DIR"), os.getenv("OS_MARKDOWN_VAULT_DIR_1")),
+        "vault2": get_dirs_in_dir(os.getenv("OS_MARKDOWN_BASE_DIR"), os.getenv("OS_MARKDOWN_VAULT_DIR_2")),
     }
     # Walk through all files
     for path in pattern_paths_set:
