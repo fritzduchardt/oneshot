@@ -165,10 +165,12 @@ def _create_llm(model: str, max_output_tokens: int) -> BaseChatModel:
             reasoning_budget=16384,
             chat_template_kwargs={"enable_thinking":True},
         )
+        if max_output_tokens > 0:
+            ret.max_tokens = max_output_tokens
     else:
         ret = init_chat_model(model)
-    if max_output_tokens > 0:
-        ret.max_tokens = max_output_tokens
+        if max_output_tokens > 0:
+            ret.max_tokens = max_output_tokens
     return ret
 
 
