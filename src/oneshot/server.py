@@ -233,7 +233,8 @@ async def generate_patterns():
         f"{os.getenv('OS_MARKDOWN_BASE_DIR')}/"
         f"{os.getenv('OS_MARKDOWN_VAULT_PATTERN_DIR')}"
     )
-    shutil.rmtree(output_dir, ignore_errors=True)
+    if not os.getenv("OS_DISABLE_RENDER_CLEANUP"):
+        shutil.rmtree(output_dir, ignore_errors=True)
     render.render_jinja2_templates(output_dir, {pattern_dir_1, pattern_dir_2})
     if sync_pattern_dir:
         logging.info(f"Syncing patterns in {sync_pattern_dir}")

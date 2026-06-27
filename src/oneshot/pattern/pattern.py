@@ -59,6 +59,7 @@ def delete_pattern(path: str, pattern: str) -> bool:
         logging.error(f"Error: File '{pattern_path}' not found")
         return False
 
+
 def list_patterns(path: str) -> list[str]:
     files = list(Path(path).glob("**/system.md"))
     res: list[str] = []
@@ -66,6 +67,7 @@ def list_patterns(path: str) -> list[str]:
         res.append(f.parent.name)
     res.sort()
     return res
+
 
 def create_complete_prompt(prompt: str, stdin: str) -> str:
     if stdin:
@@ -77,6 +79,7 @@ Specific User Request: {prompt}
         return f"""
 Specific User Request: {prompt}
         """
+
 
 def create_complete_pattern(model: str, pattern_name: str, pattern: str) -> str:
     return f"""

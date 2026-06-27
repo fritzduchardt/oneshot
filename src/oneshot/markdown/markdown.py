@@ -45,7 +45,6 @@ def save_markdown(md: str, base_path, path, pattern_config_pattern_dir):
                 clean_md += f"{l}\n"
         Path(full_path).write_text(clean_md)
         if "/Food/" in full_path:
-            logging.info(f"Generating images for: {full_path}")
             generate_image.generate_food_images(md, base_path, path, pattern_config_pattern_dir)
         else:
             logging.info(f"Not generating images for: {full_path}")

@@ -19,8 +19,8 @@ from ..pattern import pattern
 # imagen-4.0-generate-001
 # imagen-4.0-fast-generate-001
 IMAGE_MODEL_NAME = os.getenv("IMAGE_MODEL", "imagen-4.0-ultra-generate-001")
-# IMAGE_PROMPT_MODEL_NAME = os.getenv("IMAGE_PROMPT_MODEL", "deepseek-v4-pro")
-IMAGE_PROMPT_MODEL_NAME = os.getenv("IMAGE_PROMPT_MODEL", "claude-opus-4-7")
+IMAGE_PROMPT_MODEL_NAME = os.getenv("IMAGE_PROMPT_MODEL", "deepseek-v4-pro")
+# IMAGE_PROMPT_MODEL_NAME = os.getenv("IMAGE_PROMPT_MODEL", "claude-opus-4-7")
 
 _image_executor = ThreadPoolExecutor(max_workers=4)
 
@@ -45,6 +45,11 @@ def generate_food_images(
     final_pattern = pattern.get_pattern(pattern_config_pattern_dir, "food_image_final")
     images = extract_images(md)
     str_output = StrOutputParser()
+    if images:
+        logging.info(f"Generating images for: {path}")
+    else:
+        logging.info(f"No images in {path}")
+        return
 
     for image in images:
         cur_pattern = ingreds_pattern if image.endswith("ingredients.png") else final_pattern
