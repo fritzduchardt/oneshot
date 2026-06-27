@@ -126,4 +126,4 @@ model() {
   echo $DEFAULT_MODEL
 }
 
-model_gemini_flash
+model_deepseek_flash

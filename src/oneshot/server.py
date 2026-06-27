@@ -42,7 +42,8 @@ from .markdown import markdown
 
 app = FastAPI()
 
-READ_TIMEOUT = 600
+_READ_TIMEOUT = 600
+_METADATA_REGEX = r'^(\s*---[\w\W\n]+?---)\s*'
 
 
 class CompletionRequest(BaseModel):
@@ -150,7 +151,7 @@ def completion(body: CompletionRequest):
 
         if markdown_file_content:
             # strip metadata
-            markdown_file_content = re.sub("^\s*---[\w\W\n]+?---\n", "", markdown_file_content)
+            markdown_file_content = re.sub(_METADATA_REGEX, "", markdown_file_content)
             markdown_file_content = f"Journal File: {markdown_path}\n\n{markdown_file_content}"
 
         logging.info(f"Used pattern: {pattern_name}")
@@ -232,7 +233,6 @@ async def generate_patterns():
         f"{os.getenv('OS_MARKDOWN_BASE_DIR')}/"
         f"{os.getenv('OS_MARKDOWN_VAULT_PATTERN_DIR')}"
     )
-    # shutils fails on emptydir
     fileutils.clear_directory_contents(output_dir)
     render.render_jinja2_templates(output_dir, {pattern_dir_1, pattern_dir_2})
     if sync_pattern_dir:
@@ -271,6 +271,12 @@ async def get_markdown(file_path: str):
         if not found:
             raise HTTPException(status_code=404)
     content = markdown.get_md(md_path)
+    match = re.search(_METADATA_REGEX, content)
+    if match:
+        metadata = match.group(1)
+        content = content.replace(metadata, "").strip()
+        content = f"{metadata}\nFILENAME: {file_path}\n{content}"
+
     return PlainTextResponse(content=content)
 
 
@@ -335,11 +341,10 @@ async def add_cors_headers(request: Request, call_next):
 
 
 if __name__ == "__main__":
-    asyncio.run(generate_patterns())
     import uvicorn
     uvicorn.run(
         app,
         host="0.0.0.0",
         port=int(os.getenv("PORT", "8000")),
-        timeout_keep_alive=READ_TIMEOUT,
+        timeout_keep_alive=_READ_TIMEOUT,
     )

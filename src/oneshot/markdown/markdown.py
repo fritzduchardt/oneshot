@@ -20,8 +20,7 @@ def list_files(path: str) -> list[str]:
 
 
 def get_md(path: str) -> str:
-    md = Path(path).read_text()
-    return f"FILENAME: {path}\n\n{md}"
+    return Path(path).read_text()
 
 def delete_md(path: str) -> bool:
     try:

@@ -3,6 +3,8 @@ import os
 import re
 from pathlib import Path
 
+from src.oneshot.ai.ai_utils import clean_llm_response
+
 
 def write_to_disk(content: str):
     pattern = r'^FILENAME:\s*(.+?)\s*$'
@@ -17,6 +19,7 @@ def write_to_disk(content: str):
         else:
             file_content += f"{line}\n"
 
+    file_content = clean_llm_response(file_content)
     if not write_file(file_content, file_path):
         logging.warning("Writing back to disk failed. Writing to stdout")
         print(file_content)
