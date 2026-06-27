@@ -21,7 +21,6 @@ from .message_queue import q
 from .pattern import pattern
 from .pattern import render
 from .social import telegram
-from .utils import fileutils
 
 log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
@@ -213,8 +212,9 @@ async def get_pattern(name: str):
 
 @app.delete("/patterns/{name}")
 async def delete_pattern(name: str):
-    pattern_dir = os.getenv("OS_PATTERN_TEMPLATE_DIR")
-    if pattern.delete_pattern(pattern_dir, name):
+    pattern_template_dir = os.getenv("OS_PATTERN_TEMPLATE_DIR")
+    pattern_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
+    if pattern.delete_pattern(pattern_template_dir, name) and pattern.delete_pattern(pattern_dir, name):
         return PlainTextResponse(content="OK")
     return PlainTextResponse(content="Failure")
 
@@ -233,11 +233,11 @@ async def generate_patterns():
         f"{os.getenv('OS_MARKDOWN_BASE_DIR')}/"
         f"{os.getenv('OS_MARKDOWN_VAULT_PATTERN_DIR')}"
     )
-    fileutils.clear_directory_contents(output_dir)
+    shutil.rmtree(output_dir, ignore_errors=True)
     render.render_jinja2_templates(output_dir, {pattern_dir_1, pattern_dir_2})
     if sync_pattern_dir:
         logging.info(f"Syncing patterns in {sync_pattern_dir}")
-        fileutils.clear_directory_contents(sync_pattern_dir)
+        shutil.rmtree(sync_pattern_dir, ignore_errors=True)
         shutil.copytree(output_dir, sync_pattern_dir, dirs_exist_ok=True)
     return PlainTextResponse(content="OK")
 
