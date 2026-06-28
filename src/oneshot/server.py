@@ -68,6 +68,10 @@ class TelegramSendRequest(BaseModel):
     markdown: str
 
 
+class NotifyRequest(BaseModel):
+    markdown: str
+    type: str
+
 @app.get("/stream")
 async def stream():
     async def event_stream():
@@ -84,14 +88,24 @@ async def stream():
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
+@app.post("/notify")
+async def notify(body: NotifyRequest):
+    logging.info(f"Receive notification: {body.type}")
+    data = {
+        "message": body.markdown,
+        "type": body.type,
+    }
+    q.put_nowait(data)
+
+
 @app.post("/chart")
 async def chart(body: ChartRequest):
     pattern_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
-    pattern_name, prompt = _grep_pattern(pattern_dir, body.pattern, body.message)
+    pattern_name, prompt = await _grep_pattern(pattern_dir, body.pattern, body.message)
     pattern_content = pattern.get_pattern(pattern_dir, pattern_name)
     base_path = os.getenv("OS_MARKDOWN_BASE_DIR")
     if body.markdown:
-        markdown_file_content = Path(f"{base_path}/{body.markdown}").read_text()
+        markdown_file_content = await _read_file(f"{base_path}/{body.markdown}")
         markdown_file_content = f"Journal File: {body.markdown}\n\n{markdown_file_content}"
         prompt = pattern.create_complete_prompt(prompt, markdown_file_content)
     result = await call_ai_only_tools(body.model, pattern.create_complete_pattern(body.model, body.pattern, pattern_content), prompt, "create_chart", )
@@ -104,7 +118,7 @@ async def chart(body: ChartRequest):
 _image_executor = ThreadPoolExecutor(max_workers=4)
 
 @app.post("/completion")
-def completion(body: CompletionRequest):
+async def completion(body: CompletionRequest):
     try:
         pattern_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
         base_path = os.getenv("OS_MARKDOWN_BASE_DIR")
@@ -117,9 +131,9 @@ def completion(body: CompletionRequest):
         prompt = body.message
         pattern_name = body.pattern
 
-        pattern_name, prompt = _grep_pattern(pattern_dir, pattern_name, prompt)
+        pattern_name, prompt = await _grep_pattern(pattern_dir, pattern_name, prompt)
         if pattern_name == "weaviate":
-            resp = ai_utils.call_weaviate(weaviate_host, weaviate_port, weaviate_grpc_host, weaviate_grpc_port, "PatternFile", prompt)
+            resp = await ai_utils.call_weaviate(weaviate_host, weaviate_port, weaviate_grpc_host, weaviate_grpc_port, "PatternFile", prompt)
             if resp:
                 logging.info(f"Weaviate found pattern: {resp[0].properties.get('path')}")
                 pattern_name = Path(resp[0].properties["path"]).parent.name
@@ -131,7 +145,7 @@ def completion(body: CompletionRequest):
         markdown_file_content = ""
         if markdown_path:
             if markdown_path == "weaviate":
-                resp = ai_utils.call_weaviate(
+                resp = await ai_utils.call_weaviate(
                     weaviate_host,
                     weaviate_port,
                     weaviate_grpc_host,
@@ -146,7 +160,7 @@ def completion(body: CompletionRequest):
                     markdown_path = weaviate_path
                     markdown_file_content += f"{obj.properties['content']}\n\n"
             else:
-                markdown_file_content = Path(f"{base_path}/{markdown_path}").read_text()
+                markdown_file_content = await _read_file(f"{base_path}/{markdown_path}")
 
         if markdown_file_content:
             # strip metadata
@@ -155,9 +169,9 @@ def completion(body: CompletionRequest):
 
         logging.info(f"Used pattern: {pattern_name}")
         if pattern_name.endswith("prompt"):
-            pattern_content = pattern.generate_pattern_from_prompt(pattern_content, body.model, prompt, markdown_file_content)
+            pattern_content = await pattern.generate_pattern_from_prompt(pattern_content, body.model, prompt, markdown_file_content)
 
-        llm_response = asyncio.run(ai_utils.complete(
+        llm_response = await ai_utils.complete(
             pattern_name,
             pattern_content,
             markdown_file_content,
@@ -168,7 +182,7 @@ def completion(body: CompletionRequest):
             weaviate_port,
             weaviate_grpc_host,
             weaviate_grpc_port,
-        ))
+        )
 
         return PlainTextResponse(content=llm_response)
     except BaseException as e:
@@ -177,7 +191,7 @@ def completion(body: CompletionRequest):
         return PlainTextResponse(content=msg)
 
 
-def _grep_pattern(pattern_dir: str | Any, pattern_name: str, prompt: str) -> tuple[str, str]:
+async def _grep_pattern(pattern_dir: str | Any, pattern_name: str, prompt: str) -> tuple[str, str]:
     if pattern_name == "grep":
         if ":" in prompt:
             parts = prompt.split(":", 1)
@@ -189,17 +203,23 @@ def _grep_pattern(pattern_dir: str | Any, pattern_name: str, prompt: str) -> tup
             prompt = parts[1].strip()
         else:
             term = prompt.strip()
-        if not (pattern_name := pattern.grep_pattern(pattern_dir, term)):
+        if not (pattern_name := await pattern.grep_pattern(pattern_dir, term)):
             logging.info("Grep pattern not found")
             pattern_name = "general"
     return pattern_name, prompt
+
+
+async def _read_file(path: str) -> str:
+    import aiofiles
+    async with aiofiles.open(path) as f:
+        return await f.read()
 
 
 @app.get("/patterns/names")
 async def pattern_names():
     pattern_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
     logging.info(f"Listing patterns in: {pattern_dir}")
-    patterns = pattern.list_patterns(pattern_dir)
+    patterns = await pattern.list_patterns(pattern_dir)
     return JSONResponse(content=patterns)
 
 
@@ -207,14 +227,15 @@ async def pattern_names():
 async def get_pattern(name: str):
     pattern_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
     # return plain text to avoid quoting
-    return PlainTextResponse(content=pattern.get_pattern(pattern_dir, name))
+    content = pattern.get_pattern(pattern_dir, name)
+    return PlainTextResponse(content=content)
 
 
 @app.delete("/patterns/{name}")
 async def delete_pattern(name: str):
     pattern_template_dir = os.getenv("OS_PATTERN_TEMPLATE_DIR")
     pattern_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
-    if pattern.delete_pattern(pattern_template_dir, name) and pattern.delete_pattern(pattern_dir, name):
+    if await pattern.delete_pattern(pattern_template_dir, name) and await pattern.delete_pattern(pattern_dir, name):
         return PlainTextResponse(content="OK")
     return PlainTextResponse(content="Failure")
 
@@ -250,7 +271,8 @@ async def markdown_paths():
     base_path = os.getenv("OS_MARKDOWN_BASE_DIR")
     while os.getenv(f"OS_MARKDOWN_VAULT_DIR_{count}"):
         path = os.getenv(f"OS_MARKDOWN_VAULT_DIR_{count}")
-        paths.extend(markdown.list_files(f"{base_path}/{path}"))
+        vault_paths = await markdown.list_files(f"{base_path}/{path}")
+        paths.extend(vault_paths)
         count = count + 1
     # trim base_path
     paths = [path.replace(f"{base_path}/", "") for path in paths]
@@ -271,7 +293,7 @@ async def get_markdown(file_path: str):
             break
         if not found:
             raise HTTPException(status_code=404)
-    content = markdown.get_md(md_path)
+    content = await markdown.get_md(md_path)
     match = re.search(_METADATA_REGEX, content)
     if match:
         metadata = match.group(1)
@@ -284,7 +306,7 @@ async def get_markdown(file_path: str):
 @app.delete("/markdown/{file_path:path}")
 async def delete_markdown(file_path: str):
     base_path = os.getenv("OS_MARKDOWN_BASE_DIR")
-    if markdown.delete_md(f"{base_path}/{file_path}"):
+    if await markdown.delete_md(f"{base_path}/{file_path}"):
         return PlainTextResponse(content="OK")
     return PlainTextResponse(content="Failure")
 
@@ -295,7 +317,7 @@ async def markdown_store(body: MarkdownStoreRequest):
     md = body.markdown
     base_path = os.getenv("OS_MARKDOWN_BASE_DIR")
     pattern_config_pattern_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
-    if markdown.save_markdown(md, base_path, path, pattern_config_pattern_dir):
+    if await markdown.save_markdown(md, base_path, path, pattern_config_pattern_dir):
         return PlainTextResponse(content="OK")
     return PlainTextResponse(content="Failure")
 
@@ -310,7 +332,7 @@ async def telegram_send(body: TelegramSendRequest):
     url_path = url_path.replace(".md", ".html")
     logging.info(f"Sharing path: {url_path}")
     try:
-        telegram.send(f"https://yummy.duchardt.net/{url_path}", os.getenv("TELEGRAM_BOT_TOKEN"), os.getenv("TELEGRAM_CHAT_ID"))
+        await telegram.send(f"https://yummy.duchardt.net/{url_path}", os.getenv("TELEGRAM_BOT_TOKEN"), os.getenv("TELEGRAM_CHAT_ID"))
         return PlainTextResponse(content="OK")
     except Exception as e:
         logging.error(e)

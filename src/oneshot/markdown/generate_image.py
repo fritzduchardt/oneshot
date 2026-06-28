@@ -11,7 +11,7 @@ from google.genai import types
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 
-from ..ai.ai_utils import get_deepseek, get_anthropic
+from ..ai.ai_utils import get_model
 from ..message_queue import q
 from ..pattern import pattern
 
@@ -35,7 +35,7 @@ def extract_images(md: str) -> list[str]:
     return res
 
 
-def generate_food_images(
+async def generate_food_images(
     md: str,
     base_path: str,
     path: str,
@@ -53,19 +53,17 @@ def generate_food_images(
 
     for image in images:
         cur_pattern = ingreds_pattern if image.endswith("ingredients.png") else final_pattern
-        # Submit image generation as fire and forget task to thread pool
-        _image_executor.submit(
-            generate_image,
-            image,
-            cur_pattern,
-            md,
-            base_path,
-            path,
-            str_output,
-        )
+        await generate_image(
+                image,
+                cur_pattern,
+                md,
+                base_path,
+                path,
+                str_output,
+            )
 
 
-def generate_image(
+async def generate_image(
     image: str,
     cur_pattern: str,
     md: str,
@@ -73,26 +71,22 @@ def generate_image(
     path: str,
     str_output: StrOutputParser,
 ):
+    import asyncio
     try:
-        logging.info(f"Generating image: {image} with {IMAGE_MODEL_NAME}")
         prompt = ChatPromptTemplate(
             [
                 ("system", cur_pattern),
                 ("human", "Recipe: {md}"),
             ]
         )
-
-        if IMAGE_PROMPT_MODEL_NAME.startswith("deepseek"):
-            prompt_model = get_deepseek(IMAGE_PROMPT_MODEL_NAME)
-        elif IMAGE_PROMPT_MODEL_NAME.startswith("claude"):
-            prompt_model = get_anthropic(IMAGE_PROMPT_MODEL_NAME)
-        else:
-            raise RuntimeError(f"Unknown image model: {IMAGE_PROMPT_MODEL_NAME}")
+        prompt_model = get_model(IMAGE_PROMPT_MODEL_NAME)
+        logging.info(f"Generating image prompt with: {IMAGE_PROMPT_MODEL_NAME}")
         chain = prompt | prompt_model | str_output
-        image_prompt = chain.invoke({"md": md})
-
+        image_prompt = await chain.ainvoke({"md": md})
+        logging.info(f"Generating image: {image} with {IMAGE_MODEL_NAME}")
         client = _get_genai_client()
-        response = client.models.generate_images(
+        response = await asyncio.to_thread(
+            client.models.generate_images,
             model=IMAGE_MODEL_NAME,
             prompt=image_prompt,
             config=types.GenerateImagesConfig(
@@ -105,7 +99,7 @@ def generate_image(
         for generated_image in response.generated_images:
             image_bytes: bytes | None = generated_image.image.image_bytes
             image_obj = Image.open(io.BytesIO(image_bytes))
-            image_obj.save(output_path.as_posix())
+            await asyncio.to_thread(image_obj.save, output_path.as_posix())
             print("Image successfully saved to disk.")
 
         #![](recipename-ingredients.png, e.g. lentil-patties-ingredients.png)
@@ -115,7 +109,7 @@ def generate_image(
             "basepath": str(Path(path).parent),
             "image": image,
         }
-        q.put(data)
+        q.put_nowait(data)
     except BaseException as e:
         logging.error("Failed during image generation: %s", e, exc_info=True)
 

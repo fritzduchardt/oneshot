@@ -13,6 +13,7 @@ def write_to_disk(content: str):
     for line in content.split("\n"):
         match = re.search(pattern, line)
         if match:
+            file_content = clean_llm_response(file_content)
             write_file(file_content, file_path)
             file_path = match.group(1)
             file_content = ""

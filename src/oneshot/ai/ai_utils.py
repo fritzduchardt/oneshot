@@ -28,7 +28,7 @@ async def complete(pattern_name: str, pattern_content: str, stdin: str, prompt: 
         llm_resp = await lc.call_ai_with_tools(model, p.create_complete_pattern(model, pattern_name, pattern_content), p.create_complete_prompt(prompt, stdin))
         metadata["mcp"] = "true"
     else:
-        llm_resp = lc.call_ai(model, p.create_complete_pattern(model, pattern_name, pattern_content), p.create_complete_prompt(prompt, stdin))
+        llm_resp = await lc.call_ai(model, p.create_complete_pattern(model, pattern_name, pattern_content), p.create_complete_prompt(prompt, stdin))
 
     metadata_str = ""
     for k, v in metadata.items():
@@ -38,8 +38,8 @@ async def complete(pattern_name: str, pattern_content: str, stdin: str, prompt: 
     return llm_resp_with_metadata
 
 
-def call_weaviate(weaviate_host: str, weaviate_port: int, weaviate_grpc_host: str, weaviate_grpc_port: int, collection: str, prompt: str, limit: int = 1) -> list[Object[Any, Any]]:
-    with weaviate.WeaviateClient(
+async def call_weaviate(weaviate_host: str, weaviate_port: int, weaviate_grpc_host: str, weaviate_grpc_port: int, collection: str, prompt: str, limit: int = 1) -> list[Object[Any, Any]]:
+    async with weaviate.use_async(
         connection_params=ConnectionParams.from_params(
             http_host=weaviate_host,
             http_port=weaviate_port,
@@ -54,11 +54,11 @@ def call_weaviate(weaviate_host: str, weaviate_port: int, weaviate_grpc_host: st
         if collection == "PatternFile":
             prompt = " ".join(prompt.split(maxsplit=2)[:2])
             logging.info(f"Prompt: {prompt}")
-            response = pattern.query.bm25(query=prompt, query_properties=["path", "content"], limit=limit)
+            response = await pattern.query.bm25(query=prompt, query_properties=["path", "content"], limit=limit)
         else:
             from weaviate.collections.classes.grpc import MetadataQuery
 
-            response = pattern.query.near_text(
+            response = await pattern.query.near_text(
                 query=prompt,
                 limit=limit,
                 certainty=0.6,

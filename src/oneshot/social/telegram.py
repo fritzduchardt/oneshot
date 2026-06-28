@@ -1,9 +1,9 @@
-import requests
+import httpx
 
 URL = "https://api.telegram.org"
 
 
-def send(msg: str, token: str, chat_id: int):
+async def send(msg: str, token: str, chat_id: int):
     if chat_id is None:
         raise ValueError("chat_id is required")
 
@@ -11,5 +11,6 @@ def send(msg: str, token: str, chat_id: int):
         "chat_id": chat_id,
         "text": msg,
     }
-    response = requests.post(f"{URL}/bot{token}/sendMessage", json=payload)
-    response.raise_for_status()
+    async with httpx.AsyncClient() as client:
+        response = await client.post(f"{URL}/bot{token}/sendMessage", json=payload)
+        response.raise_for_status()

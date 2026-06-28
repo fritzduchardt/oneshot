@@ -2,8 +2,8 @@ import json
 import logging
 import os
 import warnings
-from langchain_nvidia_ai_endpoints import ChatNVIDIA
 
+from langchain_nvidia_ai_endpoints import ChatNVIDIA
 
 warnings.filterwarnings(
     "ignore",
@@ -14,7 +14,7 @@ warnings.filterwarnings(
 
 from langchain.agents import create_agent
 from langchain_mcp_adapters.client import MultiServerMCPClient
-from langchain_mcp_adapters.callbacks import Callbacks, CallbackContext
+from langchain_mcp_adapters.callbacks import CallbackContext
 from langchain.chat_models import init_chat_model, BaseChatModel
 from langchain_google_genai import ChatGoogleGenerativeAI
 from . import ai_utils
@@ -24,6 +24,17 @@ MAX_INPUT_TOKENS_MCP = 20000
 MAX_INPUT_TOKENS_CLI = 200000
 MAX_OUTPUT_TOKENS_MCP = 20000
 MAX_OUTPUT_TOKENS_CLI = -1
+
+# Cache for tools retrieved from MCP client to avoid repeated network calls
+_tools_cache = None
+
+async def _get_cached_tools():
+    """Return cached tools or fetch and cache them."""
+    global _tools_cache
+    if _tools_cache is None:
+        _tools_cache = await client.get_tools()
+    return _tools_cache
+
 
 async def progress_handler(
         progress: float,
@@ -46,7 +57,7 @@ async def log_handler(
         "basepath": "",
         "image": "",
     }
-    q.put(data)
+    q.put_nowait(data)
 
 
 client = MultiServerMCPClient(
@@ -60,21 +71,21 @@ client = MultiServerMCPClient(
             "url": f"{os.environ.get('MCP_URL_FINCLAW')}/mcp",
         },
     },
-    callbacks=Callbacks(
-        on_logging_message=log_handler,
-        on_progress=progress_handler,
-    ),
+    # callbacks=Callbacks(
+    #     on_logging_message=log_handler,
+    #     on_progress=progress_handler,
+    # ),
 )
 
 
-def call_ai(model: str, pattern: str, prompt: str) -> str:
+async def call_ai(model: str, pattern: str, prompt: str) -> str:
     logging.info("Calling AI without tools")
     llm = _create_llm(model, MAX_OUTPUT_TOKENS_CLI)
     messages = _create_messages(pattern, prompt)
 
     _validate_token_count(llm, messages, MAX_INPUT_TOKENS_CLI)
 
-    response = llm.invoke(messages)
+    response = await llm.ainvoke(messages)
     response_text = response.text.strip()
     response_text = ai_utils.clean_llm_response(response_text)
     logging.info(f"Input tokens: {response.usage_metadata['input_tokens']}")
@@ -84,7 +95,7 @@ def call_ai(model: str, pattern: str, prompt: str) -> str:
 
 async def call_ai_with_tools(model: str, pattern: str, prompt: str) -> str:
     try:
-        available_tools = await client.get_tools()
+        available_tools = await _get_cached_tools()
         llm = _create_llm(model, MAX_OUTPUT_TOKENS_MCP)
         messages = _create_messages(pattern, prompt)
 
@@ -106,7 +117,7 @@ async def call_ai_with_tools(model: str, pattern: str, prompt: str) -> str:
 
 async def call_ai_only_tools(model: str, pattern_content: str, prompt: str, tool_name: str) -> str | None:
     try:
-        available_tools = await client.get_tools()
+        available_tools = await _get_cached_tools()
         logging.info(f"Available tools: {available_tools}")
         llm = _create_llm(model, MAX_OUTPUT_TOKENS_MCP)
         # bind only the requested tool so the llm is forced to call it
