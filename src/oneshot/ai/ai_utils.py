@@ -25,11 +25,13 @@ async def complete(pattern_name: str, pattern_content: str, stdin: str, prompt: 
     logging.info(f"Using pattern: {pattern_name}")
     metadata = {"pattern": pattern_name, "model": model}
     if with_mcp:
-        llm_resp = await lc.call_ai_with_tools(model, p.create_complete_pattern(model, pattern_name, pattern_content), p.create_complete_prompt(prompt, stdin))
+        llm_resp, input_tokens, output_tokens = await lc.call_ai_with_tools(model, p.create_complete_pattern(model, pattern_name, pattern_content), p.create_complete_prompt(prompt, stdin))
         metadata["mcp"] = "true"
     else:
-        llm_resp = await lc.call_ai(model, p.create_complete_pattern(model, pattern_name, pattern_content), p.create_complete_prompt(prompt, stdin))
+        llm_resp, input_tokens, output_tokens = await lc.call_ai(model, p.create_complete_pattern(model, pattern_name, pattern_content), p.create_complete_prompt(prompt, stdin))
 
+    costs = calculate_ai_cost(model, input_tokens, output_tokens)
+    metadata["costs"] = f"{costs} USD ({input_tokens}/{output_tokens})"
     metadata_str = ""
     for k, v in metadata.items():
         metadata_str += f"{k}: {v}\n"
@@ -191,3 +193,83 @@ def clean_llm_response(response: str) -> str:
     if response.endswith("```"):
         response = re.sub(r"\n```$", "", response)
     return response
+
+
+def calculate_ai_cost(model: str, input_tokens: int, output_tokens: int) -> str:
+    """Calculate the cost in USD for using a given AI model with provided token counts.
+
+    Pricing is based on publicly published rates per million tokens for input and output.
+    Supports models from Gemini, Anthropic, OpenAI, DeepSeek, and Grok (xAI).
+    Raises ValueError if the model is unknown or unsupported.
+    """
+    input_cost_per_million, output_cost_per_million = _get_model_pricing(model)
+    cost = (input_tokens / 1_000_000) * input_cost_per_million
+    cost += (output_tokens / 1_000_000) * output_cost_per_million
+
+    return round(cost, 2)
+
+
+def _get_model_pricing(model: str) -> tuple[float, float]:
+    """Lookup and return (input_cost_per_million, output_cost_per_million) for the given model.
+
+    Pricing data is sourced from official provider documentation as of early 2026.
+    For models not explicitly listed, a reasonable default for the provider family is used.
+    """
+    # Known model pricing in USD per 1M tokens (input, output)
+    provider_pricing = {
+        "gemini": {
+            "gemini-3.1-pro-preview": (2.0, 12.0),
+            "gemini-3.5-flash": (1.5, 9.0),
+            # Fallback for other Gemini models (e.g., gemini-2.0-flash)
+            "default": (2.0, 12.0),
+        },
+        "openai": {
+            "gpt-5.5": (5.0, 30.0),
+            "gpt-5.4": (2.5, 15.0),
+            "gpt-5.4-pro": (2.5, 15.0),
+            "gpt-5.2-pro": (2.5, 15.0),
+            # Fallback for other GPT models (GPT-5.x etc.)
+            "default": (2.5, 15.0),
+        },
+        "anthropic": {
+            "claude-opus-4": (5.0, 25.0),
+            "claude-opus-4-1": (5.0, 25.0),
+            "claude-opus-4-5": (5.0, 25.0),
+            "claude-sonnet-4-5": (3.0, 15.0),
+            # Fallback for other Claude models
+            "default": (5.0, 25.0),
+        },
+        "deepseek": {
+            "deepseek-v4-flash": (0.028, 0.87),
+            "deepseek-v4": (0.07, 0.30),
+            # Fallback for other DeepSeek models
+            "default": (0.028, 0.87),
+        },
+        "grok": {
+            "grok-4": (2.0, 10.0),
+            "grok-4-1": (2.0, 10.0),
+            # Fallback for other Grok models
+            "default": (2.0, 10.0),
+        },
+    }
+
+    provider = None
+    if model.startswith("gemini"):
+        provider = "gemini"
+    elif model.startswith("gpt"):
+        provider = "openai"
+    elif model.startswith("claude"):
+        provider = "anthropic"
+    elif model.startswith("deepseek"):
+        provider = "deepseek"
+    elif model.startswith("grok"):
+        provider = "grok"
+
+    if provider is None:
+        raise ValueError(f"Unsupported model: {model}. Cannot determine pricing.")
+
+    pricing_dict = provider_pricing[provider]
+    # Try exact match first, fallback to provider default
+    if model in pricing_dict:
+        return pricing_dict[model]
+    return pricing_dict["default"]

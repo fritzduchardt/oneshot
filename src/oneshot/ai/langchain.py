@@ -78,7 +78,7 @@ client = MultiServerMCPClient(
 )
 
 
-async def call_ai(model: str, pattern: str, prompt: str) -> str:
+async def call_ai(model: str, pattern: str, prompt: str) -> tuple[str, int, int]:
     logging.info("Calling AI without tools")
     llm = _create_llm(model, MAX_OUTPUT_TOKENS_CLI)
     messages = _create_messages(pattern, prompt)
@@ -88,9 +88,7 @@ async def call_ai(model: str, pattern: str, prompt: str) -> str:
     response = await llm.ainvoke(messages)
     response_text = response.text.strip()
     response_text = ai_utils.clean_llm_response(response_text)
-    logging.info(f"Input tokens: {response.usage_metadata['input_tokens']}")
-    logging.info(f"Output tokens: {response.usage_metadata['output_tokens']}")
-    return response_text
+    return response_text, response.usage_metadata['input_tokens'], response.usage_metadata['output_tokens']
 
 
 async def call_ai_with_tools(model: str, pattern: str, prompt: str) -> str:
