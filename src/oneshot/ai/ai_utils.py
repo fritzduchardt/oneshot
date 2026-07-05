@@ -31,7 +31,8 @@ async def complete(pattern_name: str, pattern_content: str, stdin: str, prompt: 
         llm_resp, input_tokens, output_tokens = await lc.call_ai(model, p.create_complete_pattern(model, pattern_name, pattern_content), p.create_complete_prompt(prompt, stdin))
 
     costs = calculate_ai_cost(model, input_tokens, output_tokens)
-    metadata["costs"] = f"{costs} USD ({input_tokens}/{output_tokens})"
+    if costs:
+        metadata["costs"] = costs
     metadata_str = ""
     for k, v in metadata.items():
         metadata_str += f"{k}: {v}\n"
@@ -196,17 +197,18 @@ def clean_llm_response(response: str) -> str:
 
 
 def calculate_ai_cost(model: str, input_tokens: int, output_tokens: int) -> str:
-    """Calculate the cost in USD for using a given AI model with provided token counts.
+    """Calculate the costs in USD for using a given AI model with provided token counts.
 
     Pricing is based on publicly published rates per million tokens for input and output.
     Supports models from Gemini, Anthropic, OpenAI, DeepSeek, and Grok (xAI).
     Raises ValueError if the model is unknown or unsupported.
     """
     input_cost_per_million, output_cost_per_million = _get_model_pricing(model)
-    cost = (input_tokens / 1_000_000) * input_cost_per_million
-    cost += (output_tokens / 1_000_000) * output_cost_per_million
-
-    return round(cost, 2)
+    if input_cost_per_million < 0:
+        return ""
+    costs = (input_tokens / 1_000_000) * input_cost_per_million
+    costs += (output_tokens / 1_000_000) * output_cost_per_million
+    return f"{costs} ({input_tokens}/{output_tokens})"
 
 
 def _get_model_pricing(model: str) -> tuple[float, float]:
@@ -218,38 +220,30 @@ def _get_model_pricing(model: str) -> tuple[float, float]:
     # Known model pricing in USD per 1M tokens (input, output)
     provider_pricing = {
         "gemini": {
-            "gemini-3.1-pro-preview": (2.0, 12.0),
+            "gemini-3.1-pro-preview": (4.0, 12.0),
             "gemini-3.5-flash": (1.5, 9.0),
-            # Fallback for other Gemini models (e.g., gemini-2.0-flash)
-            "default": (2.0, 12.0),
         },
         "openai": {
-            "gpt-5.5": (5.0, 30.0),
-            "gpt-5.4": (2.5, 15.0),
-            "gpt-5.4-pro": (2.5, 15.0),
-            "gpt-5.2-pro": (2.5, 15.0),
-            # Fallback for other GPT models (GPT-5.x etc.)
-            "default": (2.5, 15.0),
+            "gpt-5.5-pro": (30, 270.0),
+            "gpt-5.4-pro": (30, 270.0),
+            "gpt-5.4-mini": (0.75, 0),
+            "gpt-5.4-nano": (0.2, 0),
+            "gpt-5.5": (5.0, 45.0),
+            "gpt-5.4": (2.5, 22.5),
         },
         "anthropic": {
+            "claude-fable": (10, 50),
+            "claude-mythos": (10, 50),
             "claude-opus-4": (5.0, 25.0),
-            "claude-opus-4-1": (5.0, 25.0),
-            "claude-opus-4-5": (5.0, 25.0),
-            "claude-sonnet-4-5": (3.0, 15.0),
-            # Fallback for other Claude models
-            "default": (5.0, 25.0),
+            "claude-sonnet": (3.0, 15.0),
+            "claude-haiku": (1.0, 5.0),
         },
         "deepseek": {
-            "deepseek-v4-flash": (0.028, 0.87),
-            "deepseek-v4": (0.07, 0.30),
-            # Fallback for other DeepSeek models
-            "default": (0.028, 0.87),
+            "deepseek-v4-flash": (0.09, 0.18),
+            "deepseek-v4-pro": (0.435, 0.87),
         },
         "grok": {
-            "grok-4": (2.0, 10.0),
-            "grok-4-1": (2.0, 10.0),
-            # Fallback for other Grok models
-            "default": (2.0, 10.0),
+            "grok-4.3": (1.25, 2.5),
         },
     }
 
@@ -266,10 +260,10 @@ def _get_model_pricing(model: str) -> tuple[float, float]:
         provider = "grok"
 
     if provider is None:
-        raise ValueError(f"Unsupported model: {model}. Cannot determine pricing.")
+        return -1, -1
 
     pricing_dict = provider_pricing[provider]
-    # Try exact match first, fallback to provider default
-    if model in pricing_dict:
-        return pricing_dict[model]
-    return pricing_dict["default"]
+    for key, val in pricing_dict:
+        if key.startwith(model):
+            return val
+    return -1, -1
