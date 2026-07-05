@@ -212,58 +212,32 @@ def calculate_ai_cost(model: str, input_tokens: int, output_tokens: int) -> str:
 
 
 def _get_model_pricing(model: str) -> tuple[float, float]:
-    """Lookup and return (input_cost_per_million, output_cost_per_million) for the given model.
-
-    Pricing data is sourced from official provider documentation as of early 2026.
-    For models not explicitly listed, a reasonable default for the provider family is used.
-    """
-    # Known model pricing in USD per 1M tokens (input, output)
-    provider_pricing = {
-        "gemini": {
-            "gemini-3.1-pro-preview": (4.0, 12.0),
-            "gemini-3.5-flash": (1.5, 9.0),
-        },
-        "openai": {
-            "gpt-5.5-pro": (30, 270.0),
-            "gpt-5.4-pro": (30, 270.0),
-            "gpt-5.4-mini": (0.75, 0),
-            "gpt-5.4-nano": (0.2, 0),
-            "gpt-5.5": (5.0, 45.0),
-            "gpt-5.4": (2.5, 22.5),
-        },
-        "anthropic": {
-            "claude-fable": (10, 50),
-            "claude-mythos": (10, 50),
-            "claude-opus-4": (5.0, 25.0),
-            "claude-sonnet": (3.0, 15.0),
-            "claude-haiku": (1.0, 5.0),
-        },
-        "deepseek": {
-            "deepseek-v4-flash": (0.09, 0.18),
-            "deepseek-v4-pro": (0.435, 0.87),
-        },
-        "grok": {
-            "grok-4.3": (1.25, 2.5),
-        },
+    prices: dict[str, tuple[float, float]] = {
+        # gemini
+        "gemini-3.1-pro-preview": (4.0, 12.0),
+        "gemini-3.5-flash": (1.5, 9.0),
+        # openai
+        "gpt-5.5-pro": (30, 270.0),
+        "gpt-5.4-pro": (30, 270.0),
+        "gpt-5.4-mini": (0.75, 0),
+        "gpt-5.4-nano": (0.2, 0),
+        "gpt-5.5": (5.0, 45.0),
+        "gpt-5.4": (2.5, 22.5),
+        # claude
+        "claude-fable": (10, 50),
+        "claude-mythos": (10, 50),
+        "claude-opus-4": (5.0, 25.0),
+        "claude-sonnet": (3.0, 15.0),
+        "claude-haiku": (1.0, 5.0),
+        # deepseek
+        "deepseek-v4-flash": (0.09, 0.18),
+        "deepseek-v4-pro": (0.435, 0.87),
+        # grok
+        "grok-4.3": (1.25, 2.5),
     }
 
-    provider = None
-    if model.startswith("gemini"):
-        provider = "gemini"
-    elif model.startswith("gpt"):
-        provider = "openai"
-    elif model.startswith("claude"):
-        provider = "anthropic"
-    elif model.startswith("deepseek"):
-        provider = "deepseek"
-    elif model.startswith("grok"):
-        provider = "grok"
+    for key, (inp, out) in prices.items():
+        if model.startswith(key):
+            return inp, out
 
-    if provider is None:
-        return -1, -1
-
-    pricing_dict = provider_pricing[provider]
-    for key, val in pricing_dict:
-        if key.startwith(model):
-            return val
     return -1, -1
