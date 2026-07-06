@@ -17,7 +17,7 @@ from . import langchain as lc
 from ..pattern import pattern as p
 
 
-async def complete(pattern_name: str, pattern_content: str, stdin: str, prompt: str, model: str, with_mcp: bool, weaviate_host: str, weaviate_port: int, weaviate_grpc_host: str, weaviate_grpc_port: int) -> str:
+async def complete(pattern_name: str, pattern_content: str, stdin: str, prompt: str, model: str, with_mcp: bool, weaviate_host: str, weaviate_port: int, weaviate_grpc_host: str, weaviate_grpc_port: int) -> tuple[str, dict]:
     if not pattern_content:
         return ""
 
@@ -33,12 +33,8 @@ async def complete(pattern_name: str, pattern_content: str, stdin: str, prompt: 
     costs = calculate_ai_cost(model, input_tokens, output_tokens)
     if costs:
         metadata["costs"] = costs
-    metadata_str = ""
-    for k, v in metadata.items():
-        metadata_str += f"{k}: {v}\n"
 
-    llm_resp_with_metadata = f"""---\n{metadata_str}---\n{llm_resp}"""
-    return llm_resp_with_metadata
+    return llm_resp, metadata
 
 
 async def call_weaviate(weaviate_host: str, weaviate_port: int, weaviate_grpc_host: str, weaviate_grpc_port: int, collection: str, prompt: str, limit: int = 1) -> list[Object[Any, Any]]:
@@ -204,7 +200,7 @@ def calculate_ai_cost(model: str, input_tokens: int, output_tokens: int) -> str:
     Raises ValueError if the model is unknown or unsupported.
     """
     input_cost_per_million, output_cost_per_million = _get_model_pricing(model)
-    if input_cost_per_million < 0:
+    if input_cost_per_million < 0 or input_tokens < 0:
         return ""
     costs = (input_tokens / 1_000_000) * input_cost_per_million
     costs += (output_tokens / 1_000_000) * output_cost_per_million

@@ -84,7 +84,7 @@ def shoot(
     if prompt:
         prompt_str = " ".join(prompt)
 
-    llm_resp: str = asyncio.run(ai_utils.complete(
+    llm_resp, metadata = asyncio.run(ai_utils.complete(
         pattern_name,
         p.get_pattern(pattern_dir, pattern_name),
         stdin,
@@ -96,6 +96,8 @@ def shoot(
         weaviate_grpc_host,
         weaviate_grpc_port,
     ))
+    if metadata["costs"]:
+        logging.info(f"Costs: {metadata["costs"]}")
 
     if output_to_disk:
         generator.write_to_disk(llm_resp)

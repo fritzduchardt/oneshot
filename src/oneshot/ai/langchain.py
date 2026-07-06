@@ -91,7 +91,7 @@ async def call_ai(model: str, pattern: str, prompt: str) -> tuple[str, int, int]
     return response_text, response.usage_metadata['input_tokens'], response.usage_metadata['output_tokens']
 
 
-async def call_ai_with_tools(model: str, pattern: str, prompt: str) -> str:
+async def call_ai_with_tools(model: str, pattern: str, prompt: str) -> tuple[str, int, int]:
     try:
         available_tools = await _get_cached_tools()
         llm = _create_llm(model, MAX_OUTPUT_TOKENS_MCP)
@@ -105,12 +105,10 @@ async def call_ai_with_tools(model: str, pattern: str, prompt: str) -> str:
         logging.info(f"Available tools: {available_tools}")
         # noinspection PyTypeChecker
         response = await agent.ainvoke({"messages": messages})
-        logging.info(f"Input tokens: {response['messages'][-1].usage_metadata['input_tokens']}")
-        logging.info(f"Output tokens: {response['messages'][-1].usage_metadata['output_tokens']}")
-        return response["messages"][-1].text
+        return response["messages"][-1].text, response['messages'][-1].usage_metadata['input_tokens'], response['messages'][-1].usage_metadata['output_tokens']
     except Exception as e:
         logging.exception(f"Failure to call MCP Server or LLM: {e}")
-        return "Failed on call to MCP Server and / or LLM. Check logs"
+        return "Failed on call to MCP Server and / or LLM. Check logs", -1, -1
 
 
 async def call_ai_only_tools(model: str, pattern_content: str, prompt: str, tool_name: str) -> str | None:

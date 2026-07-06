@@ -171,7 +171,7 @@ async def completion(body: CompletionRequest):
         if pattern_name.endswith("prompt"):
             pattern_content = await pattern.generate_pattern_from_prompt(pattern_content, body.model, prompt, markdown_file_content)
 
-        llm_response = await ai_utils.complete(
+        llm_response, metadata = await ai_utils.complete(
             pattern_name,
             pattern_content,
             markdown_file_content,
@@ -184,7 +184,13 @@ async def completion(body: CompletionRequest):
             weaviate_grpc_port,
         )
 
-        return PlainTextResponse(content=llm_response)
+        metadata_str = ""
+        for k, v in metadata.items():
+            metadata_str += f"{k}: {v}\n"
+        llm_resp_with_metadata = f"""---\n{metadata_str}---\n{llm_response}"""
+
+        return PlainTextResponse(content=llm_resp_with_metadata)
+
     except BaseException as e:
         msg = f"Error in {e}"
         logging.error(msg, exc_info=True)
