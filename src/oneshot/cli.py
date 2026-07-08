@@ -43,8 +43,8 @@ pattern.add_typer(generate_patterns)
 models.add_typer(list_models)
 
 
-@shoot.command()
-def shoot(
+@shoot.command(name="shoot")
+def shoot_cmd(
     pattern_name: str = typer.Option("general", "--pattern", "-p", help="Predefined prompt pattern"),
     pattern_dir: str = typer.Option(
         "",
@@ -106,8 +106,8 @@ def shoot(
         sys.stdout.buffer.write(llm_resp.encode(encoding, "replace"))
 
 
-@collect.command()
-def collect(
+@collect.command(name="collect")
+def collect_cmd(
     collect_dir: str = typer.Argument(".", help="Collect directory or regex"),
     include_hidden: bool = typer.Option(False, "--hidden", "-H", help="Include hidden files in collection"),
     num_threads: int = typer.Option(1, "--threads", "-t", help="Number of concurrent threads for operation"),
@@ -122,7 +122,7 @@ def collect(
 
 
 @list_patterns.command(name="list")
-def list_patterns(
+def list_patterns_cmd(
     pattern_dir: str = typer.Option(
         "",
         "--pattern-dir",
@@ -136,7 +136,7 @@ def list_patterns(
 
 
 @generate_patterns.command(name="generate")
-def generate_patterns(
+def generate_patterns_cmd(
     output_dir: str = typer.Option(
         ...,
         "--output-dir",
@@ -158,12 +158,12 @@ def generate_patterns(
 
 
 @list_models.command(name="list")
-def list_models():
+def list_models_cmd():
     print(json.dumps(ai_utils.list_models()))
 
 
 @tokens.command(name="count")
-def count_tokens():
+def count_tokens_cmd():
     data = sys.stdin.buffer.read()
     stdin = data.decode("utf-8", errors="replace")
     print(ai_utils.count_tokens(stdin))

@@ -19,7 +19,7 @@ from ..pattern import pattern as p
 
 async def complete(pattern_name: str, pattern_content: str, stdin: str, prompt: str, model: str, with_mcp: bool, weaviate_host: str, weaviate_port: int, weaviate_grpc_host: str, weaviate_grpc_port: int) -> tuple[str, dict]:
     if not pattern_content:
-        return ""
+        return "", {}
 
     logging.info(f"Calling model: {model}")
     logging.info(f"Using pattern: {pattern_name}")
@@ -204,7 +204,7 @@ def calculate_ai_cost(model: str, input_tokens: int, output_tokens: int) -> str:
         return ""
     costs = (input_tokens / 1_000_000) * input_cost_per_million
     costs += (output_tokens / 1_000_000) * output_cost_per_million
-    return f"{costs} ({input_tokens}/{output_tokens})"
+    return f"{round(costs, 8)} ({input_tokens}/{output_tokens})"
 
 
 def _get_model_pricing(model: str) -> tuple[float, float]:
