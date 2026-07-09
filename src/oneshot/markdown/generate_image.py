@@ -1,9 +1,11 @@
+import asyncio
 import io
 import logging
 import os
 import re
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from typing_extensions import Buffer
 
 from PIL import Image
 from google import genai
@@ -19,8 +21,7 @@ from ..pattern import pattern
 # imagen-4.0-generate-001
 # imagen-4.0-fast-generate-001
 IMAGE_MODEL_NAME = os.getenv("IMAGE_MODEL", "imagen-4.0-ultra-generate-001")
-IMAGE_PROMPT_MODEL_NAME = os.getenv("IMAGE_PROMPT_MODEL", "deepseek-v4-pro")
-# IMAGE_PROMPT_MODEL_NAME = os.getenv("IMAGE_PROMPT_MODEL", "claude-opus-4-7")
+IMAGE_PROMPT_MODEL_NAME = os.getenv("IMAGE_PROMPT_MODEL", "deepseek-v4-flash")
 
 _image_executor = ThreadPoolExecutor(max_workers=4)
 
@@ -51,9 +52,11 @@ async def generate_food_images(
         logging.info(f"No images in {path}")
         return
 
+    # Fire and forget each image generation task
     for image in images:
         cur_pattern = ingreds_pattern if image.endswith("ingredients.png") else final_pattern
-        await generate_image(
+        asyncio.create_task(
+            generate_image(
                 image,
                 cur_pattern,
                 md,
@@ -61,6 +64,7 @@ async def generate_food_images(
                 path,
                 str_output,
             )
+        )
 
 
 async def generate_image(
@@ -71,7 +75,6 @@ async def generate_image(
     path: str,
     str_output: StrOutputParser,
 ):
-    import asyncio
     try:
         prompt = ChatPromptTemplate(
             [
@@ -97,7 +100,7 @@ async def generate_image(
         )
         output_path = Path(f"{base_path}/{Path(path).parent}/{image}")
         for generated_image in response.generated_images:
-            image_bytes: bytes | None = generated_image.image.image_bytes
+            image_bytes: Buffer = generated_image.image.image_bytes
             image_obj = Image.open(io.BytesIO(image_bytes))
             await asyncio.to_thread(image_obj.save, output_path.as_posix())
             print("Image successfully saved to disk.")
