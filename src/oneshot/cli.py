@@ -115,7 +115,7 @@ def collect_cmd(
 @oneshot.command(name="md")
 def md_cmd():
     content = sys.stdin.read()
-    console = Console()
+    console = Console(width=100)
     print("\n")
     console.print(Markdown(content, justify="left"))
     print("\n")
