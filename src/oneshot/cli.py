@@ -6,6 +6,9 @@ import sys
 from typing import List
 
 import typer
+from rich.console import Console
+from rich.markdown import Markdown
+
 from dotenv import load_dotenv
 
 from .ai import ai_utils
@@ -25,25 +28,15 @@ if not load_dotenv(os.getenv("OS_CONFIG_ENV_FILE")):
     logging.error("Failed to read env file.")
 
 oneshot = typer.Typer(help="Oneshot AI CLI", context_settings={"help_option_names": {"-h", "--help"}})
-shoot = typer.Typer(help="Shoot query against the AI")
-pattern = typer.Typer(help="Manage your pattern files")
-tokens = typer.Typer(help="Calculate tokens")
-models = typer.Typer(help="Manage API Models")
-collect = typer.Typer(help="Collect files to be handed to the AI")
-list_patterns = typer.Typer(help="List pattern files")
-list_models = typer.Typer(help="List Model names")
-generate_patterns = typer.Typer(help="Generate Fabric pattern files with gomplate")
-oneshot.add_typer(shoot)
-oneshot.add_typer(tokens, name="tokens")
-oneshot.add_typer(collect)
-oneshot.add_typer(pattern, name="patterns")
-oneshot.add_typer(models, name="models")
-pattern.add_typer(list_patterns)
-pattern.add_typer(generate_patterns)
-models.add_typer(list_models)
+# Groups
+patterns_grp = typer.Typer(help="Manage your pattern files")
+models_grp = typer.Typer(help="Manage API Models")
+tokens_grp = typer.Typer(help="Calculate tokens")
+oneshot.add_typer(patterns_grp, name="patterns")
+oneshot.add_typer(models_grp, name="models")
+oneshot.add_typer(tokens_grp, name="tokens")
 
-
-@shoot.command(name="shoot")
+@oneshot.command(name="shoot")
 def shoot_cmd(
     pattern_name: str = typer.Option("general", "--pattern", "-p", help="Predefined prompt pattern"),
     pattern_dir: str = typer.Option(
@@ -105,8 +98,7 @@ def shoot_cmd(
         encoding = sys.stdout.encoding or "utf-8"
         sys.stdout.buffer.write(llm_resp.encode(encoding, "replace"))
 
-
-@collect.command(name="collect")
+@oneshot.command(name="collect")
 def collect_cmd(
     collect_dir: str = typer.Argument(".", help="Collect directory or regex"),
     include_hidden: bool = typer.Option(False, "--hidden", "-H", help="Include hidden files in collection"),
@@ -120,8 +112,15 @@ def collect_cmd(
         logging.debug("Running single threaded")
         c.collect_files(collect_dir, include_hidden)
 
+@oneshot.command(name="md")
+def md_cmd():
+    content = sys.stdin.read()
+    console = Console()
+    print("\n")
+    console.print(Markdown(content, justify="left"))
+    print("\n")
 
-@list_patterns.command(name="list")
+@patterns_grp.command(name="list")
 def list_patterns_cmd(
     pattern_dir: str = typer.Option(
         "",
@@ -131,11 +130,10 @@ def list_patterns_cmd(
     ),
 ):
     logging.info(f"Listing patterns in: {pattern_dir}")
-    patterns = p.list_patterns(pattern_dir)
+    patterns = asyncio.run(p.list_patterns(pattern_dir))
     print(json.dumps(patterns))
 
-
-@generate_patterns.command(name="generate")
+@patterns_grp.command(name="generate")
 def generate_patterns_cmd(
     output_dir: str = typer.Option(
         ...,
@@ -156,18 +154,15 @@ def generate_patterns_cmd(
 
     render.render_jinja2_templates(output_dir, set(pattern_template_dir))
 
-
-@list_models.command(name="list")
+@models_grp.command(name="list")
 def list_models_cmd():
     print(json.dumps(ai_utils.list_models()))
 
-
-@tokens.command(name="count")
+@tokens_grp.command(name="count")
 def count_tokens_cmd():
     data = sys.stdin.buffer.read()
     stdin = data.decode("utf-8", errors="replace")
     print(ai_utils.count_tokens(stdin))
-
 
 if __name__ == "__main__":
     oneshot()

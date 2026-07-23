@@ -186,7 +186,7 @@ def clean_llm_response(response: str) -> str:
     """
     response = response.strip()
     if response.startswith("```"):
-        response = re.sub(r"^```", "", response)
+        response = re.sub(r"^```(.*)\n", "", response)
     if response.endswith("```"):
         response = re.sub(r"```$", "", response)
     return response

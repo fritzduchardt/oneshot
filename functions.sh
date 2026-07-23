@@ -28,7 +28,7 @@ ai_general_prompt() {
 
 ai_devops_question() {
   activate_oneshot_env
-  PYTHONPATH=$OS_SCRIPT_DIR python3 -m src.oneshot.cli shoot -p devops_quick_question "$@"
+  PYTHONPATH=$OS_SCRIPT_DIR python3 -m src.oneshot.cli shoot -p devops_quick_question "$@" | os md
 }
 
 ai_code_bash() {

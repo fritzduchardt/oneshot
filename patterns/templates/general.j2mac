@@ -7,4 +7,7 @@
           FILENAME: path/to/file.md
 
         Actual file content goes here
+- Answer in same language as question was asked, if hard to tell, default to English
+- Date format: dd.MM.yyyy, e.g. 01.12.2035
+- Never add TODOs
 {% endmacro %}
