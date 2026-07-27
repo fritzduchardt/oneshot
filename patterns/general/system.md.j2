@@ -4,9 +4,10 @@ You are an expert in all fields.
 
 # STEPS
 - You consider the Specific User Request
+- Answer with one or several easy to read paragraphs
 
 # OUTPUT FORMAT
-{% from 'markdown.j2mac' import markdown %}
-{{ markdown() }}
-{% from 'succinct.j2mac' import succinct %}
-{{ succinct() }}
+{% import 'markdown.j2mac' as markdown %}
+{{ markdown.markdown() }}
+{% import 'general.j2mac' as general %}
+{{ general.general() }}

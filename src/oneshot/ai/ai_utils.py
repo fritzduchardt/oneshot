@@ -88,10 +88,16 @@ def list_models() -> list[str]:
         "gpt-5.1",
         "gpt-5.2",
         "gpt-5.3",
-        "claude-opus-4-1",
-        "claude-opus-4-5",
-        "claude-sonnet-4-5",
+        "gpt-5.5",
+        "gpt-5-chat",
+        "gpt-5-search",
+        "gpt-5-2026",
+        "claude-opus-4",
+        "claude-opus-4",
+        "claude-sonnet-4",
         "gemini-2",
+        "gemini-3.1",
+        "gemini-3.5",
         "grok-4-1",
         "gpt-5-pro",
     ]
@@ -180,16 +186,21 @@ def get_model(model: str) -> Any:
         raise ValueError(f"Unsupported model: {model}")
 
 
+_OPENING_FENCE_PATTERN = re.compile(r"^```[a-zA-Z]*\n?")
+_TRAILING_FENCE_PATTERN = re.compile(r"\n?```$")
+
 def clean_llm_response(response: str) -> str:
     """
-        Removes starting and trailing code block description from response
+        Removes starting and trailing code block markers from response.
+        Handles optional language markers, missing opening or trailing
+        markers, and strips leftover whitespace after removal.
     """
     response = response.strip()
     if response.startswith("```"):
-        response = re.sub(r"^```(.*)\n", "", response)
+        response = _OPENING_FENCE_PATTERN.sub("", response, count=1)
     if response.endswith("```"):
-        response = re.sub(r"```$", "", response)
-    return response
+        response = _TRAILING_FENCE_PATTERN.sub("", response, count=1)
+    return response.strip()
 
 
 def calculate_ai_cost(model: str, input_tokens: int, output_tokens: int) -> str:
@@ -208,22 +219,22 @@ def calculate_ai_cost(model: str, input_tokens: int, output_tokens: int) -> str:
 
 
 def _get_model_pricing(model: str) -> tuple[float, float]:
+    """
+    :return: costs input tokens, output tokens
+    """
     prices: dict[str, tuple[float, float]] = {
         # gemini
         "gemini-3.1-pro-preview": (4.0, 12.0),
         "gemini-3.5-flash": (1.5, 9.0),
         # openai
-        "gpt-5.5-pro": (30, 270.0),
-        "gpt-5.4-pro": (30, 270.0),
-        "gpt-5.4-mini": (0.75, 0),
-        "gpt-5.4-nano": (0.2, 0),
-        "gpt-5.5": (5.0, 45.0),
-        "gpt-5.4": (2.5, 22.5),
+        "gpt-5.6-sol": (5, 30.0),
+        "gpt-5.6-terra": (2.5, 15.0),
+        "gpt-5.6-luna": (1, 6.0),
         # claude
         "claude-fable": (10, 50),
         "claude-mythos": (10, 50),
-        "claude-opus-4": (5.0, 25.0),
-        "claude-sonnet": (3.0, 15.0),
+        "claude-opus-5": (5.0, 25.0),
+        "claude-sonnet-5": (3.0, 15.0),
         "claude-haiku": (1.0, 5.0),
         # deepseek
         "deepseek-v4-flash": (0.09, 0.18),

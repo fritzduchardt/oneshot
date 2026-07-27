@@ -113,9 +113,16 @@ def collect_cmd(
         c.collect_files(collect_dir, include_hidden)
 
 @oneshot.command(name="md")
-def md_cmd():
-    content = sys.stdin.read()
-    console = Console(width=100)
+def md_cmd(
+    width: int = typer.Option(100, "--width", "-w", help="Max width for markdown rendering", envvar="OS_MD_WIDTH"),
+):
+    data_bytes = sys.stdin.buffer.read()
+    if not data_bytes:
+        logging.error("No input received on stdin for markdown formatting")
+        return
+
+    content = data_bytes.decode("utf-8", errors="replace")
+    console = Console(width=width)
     print("\n")
     console.print(Markdown(content, justify="left"))
     print("\n")

@@ -23,7 +23,7 @@ aim() {
 
 ai_general_prompt() {
   activate_oneshot_env
-  PYTHONPATH=$OS_SCRIPT_DIR python3 -m src.oneshot.cli shoot -p general "$@"
+  PYTHONPATH=$OS_SCRIPT_DIR python3 -m src.oneshot.cli shoot -p general "$@" | os md
 }
 
 ai_devops_question() {
@@ -86,15 +86,27 @@ model_claude_opus() {
   export DEFAULT_MODEL=claude-opus-4-8
 }
 
+model_claude_fable() {
+  export DEFAULT_MODEL=claude-fable-5
+}
+
 model_claude_haiku() {
   export DEFAULT_MODEL=claude-haiku-4-5-20251001
 }
 
-model_chatgpt5() {
-  export DEFAULT_MODEL=gpt-5.4
+model_gpt5_sol() {
+  export DEFAULT_MODEL=gpt-5.6-sol
 }
 
-model_chatgpt5_codex() {
+model_gpt5_terra() {
+  export DEFAULT_MODEL=gpt-5.6-terra
+}
+
+model_gpt5_luna() {
+  export DEFAULT_MODEL=gpt-5.6-luna
+}
+
+model_gpt5_codex() {
   export DEFAULT_MODEL=gpt-5-codex
 }
 
@@ -107,7 +119,7 @@ model_grok() {
 }
 
 model_gemini_flash() {
-  export DEFAULT_MODEL=gemini-3.5-flash
+  export DEFAULT_MODEL=gemini-3.6-flash
 }
 
 model_gemini_pro() {
