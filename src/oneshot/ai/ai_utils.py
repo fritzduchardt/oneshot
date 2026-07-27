@@ -225,7 +225,8 @@ def _get_model_pricing(model: str) -> tuple[float, float]:
     prices: dict[str, tuple[float, float]] = {
         # gemini
         "gemini-3.1-pro-preview": (4.0, 12.0),
-        "gemini-3.5-flash": (1.5, 9.0),
+        "gemini-3.5-flash": (1.5, 7.5),
+        "gemini-3.6-flash": (1.5, 7.5),
         # openai
         "gpt-5.6-sol": (5, 30.0),
         "gpt-5.6-terra": (2.5, 15.0),
