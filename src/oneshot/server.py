@@ -213,7 +213,6 @@ async def completion(body: CompletionRequest):
             for k, v in metadata.items():
                 metadata_str += f"{k}: {v}\n"
             llm_resp_with_metadata = f"""---\n{metadata_str}---\n{llm_response}"""
-
             yield llm_resp_with_metadata.encode("utf-8")
 
         except Exception as e:
