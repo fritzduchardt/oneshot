@@ -21,5 +21,5 @@ USER oneshot
 
 EXPOSE 8000
 
-ENTRYPOINT ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT} --timeout 300 --keep-alive 300  --worker-connections 1000 --workers 1 --forwarded-allow-ips '*' --proxy-allow-from '*' oneshot.server:app"]
-#ENTRYPOINT ["python", "-m", "oneshot.server"]
+#ENTRYPOINT ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT} --timeout 300 --keep-alive 300  --worker-connections 1000 --workers 1 --forwarded-allow-ips '*' --proxy-allow-from '*' oneshot.server:app"]
+ENTRYPOINT ["python", "-m", "oneshot.server"]
