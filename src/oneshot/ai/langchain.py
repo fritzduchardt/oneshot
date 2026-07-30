@@ -88,8 +88,9 @@ async def call_ai(model: str, pattern: str, prompt: str) -> tuple[str, int, int]
     try:
         response = llm.invoke(messages)
     except Exception as e:
-        logging.error(f"Failed to call LLM: {e}", exc_info=True)
-        return "", 0 , 0
+        msg = f"Failed to call LLM: {e}"
+        logging.error(msg, exc_info=True)
+        return msg, 0 , 0
     response_text = response.text.strip()
     response_text = ai_utils.clean_llm_response(response_text)
     logging.info(f"Input tokens: {response.usage_metadata["input_tokens"]}")
@@ -141,7 +142,7 @@ async def call_ai_only_tools(model: str, pattern_content: str, prompt: str, tool
         return f"Tool not found: {tool_name}"
     except BaseException as e:
         logging.exception(f"Failure to call MCP Server or LLM: {e}")
-        return "Failed on call to MCP Server and / or LLM. Check logs"
+        return f"Failed on call to MCP Server and / or LLM: {e}"
 
 
 def _validate_token_count(llm, messages, token_count) -> None:

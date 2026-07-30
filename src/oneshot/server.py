@@ -212,7 +212,7 @@ async def completion(body: CompletionRequest):
 
             yield llm_resp_with_metadata.encode("utf-8")
 
-        except BaseException as e:
+        except Exception as e:
             msg = f"Error in {e}"
             logging.error(msg, exc_info=True)
             yield msg.encode("utf-8")
