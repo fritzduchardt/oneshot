@@ -73,7 +73,6 @@ generate() {
   PYTHONPATH=$OS_SCRIPT_DIR python3 -m src.oneshot.cli patterns generate \
       -o "$HOME"/.config/fabric/patterns \
       -t "$HOME"/projects/github/oneshot/patterns \
-      -t "$HOME"/Sync/FritzSync/patterns \
       "$@"
 }
 

@@ -88,6 +88,7 @@ async def call_ai(model: str, pattern: str, prompt: str) -> tuple[str, int, int]
     response = await llm.ainvoke(messages)
     response_text = response.text.strip()
     response_text = ai_utils.clean_llm_response(response_text)
+    logging.debug(f"Clean LLM response:\n{response_text}")
     return response_text, response.usage_metadata['input_tokens'], response.usage_metadata['output_tokens']
 
 

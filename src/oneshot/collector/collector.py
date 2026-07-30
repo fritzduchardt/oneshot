@@ -63,5 +63,4 @@ def search_file(path: str, pattern) -> str:
 
 def cat_file(path: str):
     print(f"FILENAME: {path}")
-    print("\n")
     print(Path(path).read_text(encoding="utf-8"))
