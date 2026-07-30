@@ -85,7 +85,11 @@ async def call_ai(model: str, pattern: str, prompt: str) -> tuple[str, int, int]
 
     _validate_token_count(llm, messages, MAX_INPUT_TOKENS_CLI)
 
-    response = await llm.ainvoke(messages)
+    try:
+        response = llm.invoke(messages)
+    except Exception as e:
+        logging.error(f"Failed to call LLM: {e}", exc_info=True)
+        return "", 0 , 0
     response_text = response.text.strip()
     response_text = ai_utils.clean_llm_response(response_text)
     logging.info(f"Input tokens: {response.usage_metadata["input_tokens"]}")
