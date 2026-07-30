@@ -8,8 +8,8 @@ from src.oneshot.ai.ai_utils import clean_llm_response
 
 def write_to_disk(content: str) -> None:
     pattern = r'^FILENAME:\s*(.+?)\s*$'
-    file_path = ""
-    file_content = ""
+    file_path: str = ""
+    file_content: str = ""
 
     for line in content.split("\n"):
         match = re.search(pattern, line)
@@ -44,7 +44,7 @@ def write_to_disk(content: str) -> None:
             file_content += f"{line}\n"
 
     # Flush the last file after loop
-    if file_path:s
+    if file_path:
         file_content = clean_llm_response(file_content)
         _write_file(file_content, file_path)
     elif file_content.strip():
