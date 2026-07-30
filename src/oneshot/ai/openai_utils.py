@@ -10,8 +10,35 @@ from openai import OpenAI
 
 def list_models() -> list[str]:
     client = _create_client()
-    models = [ model.id for model in client.models.list()]
-    return models
+    all_models = [model.id for model in client.models.list()]
+    filter_prefixes = [
+        "gpt-5",
+    ]
+    blacklisted_words = [
+        "chat", "mini", "nano", "codex", "2025", "2026",
+        "gpt-5.1", "gpt-5.2", "gpt-5.3", "gpt-5.4", "gpt-5.5", "gpt-5-",
+    ]
+    filtered_models = []
+    for model in all_models:
+        # Check prefix using for loop instead of list comprehension
+        valid_prefix = False
+        for prefix in filter_prefixes:
+            if model.strip().startswith(prefix):
+                valid_prefix = True
+                break
+        if not valid_prefix:
+            continue
+        # Check blacklisted words using for loop instead of list comprehension
+        skip = False
+        for word in blacklisted_words:
+            if word in model:
+                logging.info(f"Filtering out model '{model}' because it contains blacklisted word '{word}'")
+                skip = True
+                break
+        if not skip:
+            filtered_models.append(model)
+    logging.info(f"Filtered models: {filtered_models}")
+    return filtered_models
 
 
 async def call_openai(model: str, pattern: str, prompt: str) -> str:

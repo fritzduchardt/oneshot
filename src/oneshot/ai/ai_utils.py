@@ -75,12 +75,11 @@ def list_models() -> list[str]:
     models.extend(gemini_utils.list_models())
     models.extend(deepseek_utils.list_models())
     models.extend(nvidia_utils.list_models())
-    logging.info(f"models: {models}")
     filter_prefixes = [
         "gpt-5",
         "claude",
         "grok-4",
-        "gemini",
+        "gemini-3",
         "deepseek",
         "stepfun",
     ]
@@ -91,10 +90,10 @@ def list_models() -> list[str]:
         "gpt-5.4",
         "gpt-5.5",
         "gpt-5-",
-        "chat",
-        "mini",
-        "nano",
-        "codex",
+        "-chat",
+        "-mini",
+        "-nano",
+        "-codex",
         "2025",
         "2026",
         "claude-opus-4",
@@ -104,12 +103,13 @@ def list_models() -> list[str]:
         "grok-4-2",
         "grok-4.3",
         "grok-4-0709",
+        "gemini-3.1",
+        "gemini-3.5",
+        "gemini-3-",
     ]
 
     filtered_models = [m for m in models if m.strip().startswith(tuple(filter_prefixes))]
-    logging.info(f"models: {filtered_models}")
     filtered_models = [m for m in filtered_models if not any(word in m for word in blacklisted_words)]
-    logging.info(f"models: {filtered_models}")
     return filtered_models
 
 
@@ -180,6 +180,8 @@ def get_model(model: str) -> Any:
         return get_gemini(model)
     elif model.startswith("deepseek"):
         return get_deepseek(model)
+    elif model.startswith("grok") or model.startswith("xai"):
+        return get_xai(model)
     else:
         raise ValueError(f"Unsupported model: {model}")
 
