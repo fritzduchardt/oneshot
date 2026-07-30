@@ -215,7 +215,7 @@ def calculate_ai_cost(model: str, input_tokens: int, output_tokens: int) -> str:
         return ""
     costs = (input_tokens / 1_000_000) * input_cost_per_million
     costs += (output_tokens / 1_000_000) * output_cost_per_million
-    return f"{round(costs, 4)} ({input_tokens}/{output_tokens})"
+    return f"{round(costs, 3)} ({input_tokens}/{output_tokens})"
 
 
 def _get_model_pricing(model: str) -> tuple[float, float]:
