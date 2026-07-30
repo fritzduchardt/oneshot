@@ -75,20 +75,22 @@ def list_models() -> list[str]:
     models.extend(gemini_utils.list_models())
     models.extend(deepseek_utils.list_models())
     models.extend(nvidia_utils.list_models())
-
+    logging.info(f"models: {models}")
     filter_prefixes = [
         "gpt-5",
-        "claude-",
+        "claude",
         "grok-4",
-        "gemini-2",
-        "gemini-3",
+        "gemini",
         "deepseek",
+        "stepfun",
     ]
     blacklisted_words = [
         "gpt-5.1",
         "gpt-5.2",
         "gpt-5.3",
+        "gpt-5.4",
         "gpt-5.5",
+        "gpt-5-",
         "chat",
         "mini",
         "nano",
@@ -98,24 +100,17 @@ def list_models() -> list[str]:
         "claude-opus-4",
         "claude-opus-4",
         "claude-sonnet-4",
-        "gemini-2",
-        "gemini-3.1",
-        "gemini-3.5",
         "grok-4-1",
-        "gpt-5-pro",
-    ]
-    blacklisted_models = [
-        "gpt-5-pro",
-        "gpt-5.2-pro",
-        "gpt-5.2-pro-2025-12-11",
-        "gpt-5.4-pro",
-        "gpt-5.4-pro-2026-03-05",
+        "grok-4-2",
+        "grok-4.3",
         "grok-4-0709",
     ]
 
-    filtered_models = [m for m in models if m.startswith(tuple(filter_prefixes))]
+    filtered_models = [m for m in models if m.strip().startswith(tuple(filter_prefixes))]
+    logging.info(f"models: {filtered_models}")
     filtered_models = [m for m in filtered_models if not any(word in m for word in blacklisted_words)]
-    return [m for m in filtered_models if m not in blacklisted_models]
+    logging.info(f"models: {filtered_models}")
+    return filtered_models
 
 
 def count_tokens(text: str) -> int:

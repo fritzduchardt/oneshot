@@ -11,7 +11,7 @@ MAX_TOKENS=12000
 
 def list_models() -> list[str]:
     client = _create_client()
-    models = [ model.id for model in client.models.list()]
+    models = [str(model.id) for model in client.models.list()]
     return models
 
 async def call_anthropic(model: str, pattern: str, prompt: str) -> str:
