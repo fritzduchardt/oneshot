@@ -146,7 +146,11 @@ async def completion(body: CompletionRequest):
                 else:
                     pattern_name = "general"
 
-            pattern_content = pattern.get_pattern(pattern_dir, pattern_name)
+            try:
+                pattern_content = pattern.get_pattern(pattern_dir, pattern_name)
+            except Exception as e:
+                yield f"Failed to get pattern: {e}"
+                return
 
             markdown_file_content = ""
             if markdown_path:

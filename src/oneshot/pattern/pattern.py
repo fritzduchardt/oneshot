@@ -17,9 +17,9 @@ def get_pattern(path: str, pattern: str) -> str | None:
     try:
         with open(pattern_path) as f:
             return f.read()
-    except FileNotFoundError:
+    except FileNotFoundError as e:
         logging.error(f"Error: File '{pattern_path}' not found")
-        return None
+        raise e
 
 
 async def grep_pattern(path: str, term: str) -> str:
