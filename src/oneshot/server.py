@@ -119,120 +119,82 @@ _image_executor = ThreadPoolExecutor(max_workers=4)
 
 @app.post("/completion")
 async def completion(body: CompletionRequest):
-    """
-    Streams the completion result, sending heartbeat chunks every 10 seconds
-    to prevent connection timeouts while the LLM call is in progress.
-    """
-    async def _stream_completion():
-        task = None
-        try:
-            pattern_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
-            base_path = os.getenv("OS_MARKDOWN_BASE_DIR")
-            markdown_path = body.markdown
-            with_mcp = body.with_mcp
-            weaviate_host = os.getenv("WEAVIATE_HOST", "localhost")
-            weaviate_port = os.getenv("WEAVIATE_PORT", 80)
-            weaviate_grpc_host = os.getenv("WEAVIATE_GRPC_HOST", "localhost")
-            weaviate_grpc_port = os.getenv("WEAVIATE_GRPC_PORT", 50051)
-            prompt = body.message
-            pattern_name = body.pattern
+    pattern_dir = os.getenv("OS_CONFIG_PATTERN_DIR")
+    base_path = os.getenv("OS_MARKDOWN_BASE_DIR")
+    markdown_path = body.markdown
+    with_mcp = body.with_mcp
+    weaviate_host = os.getenv("WEAVIATE_HOST", "localhost")
+    weaviate_port = os.getenv("WEAVIATE_PORT", 80)
+    weaviate_grpc_host = os.getenv("WEAVIATE_GRPC_HOST", "localhost")
+    weaviate_grpc_port = os.getenv("WEAVIATE_GRPC_PORT", 50051)
+    prompt = body.message
+    pattern_name = body.pattern
 
-            pattern_name, prompt = await _grep_pattern(pattern_dir, pattern_name, prompt)
-            if pattern_name == "weaviate":
-                resp = await ai_utils.call_weaviate(weaviate_host, weaviate_port, weaviate_grpc_host, weaviate_grpc_port, "PatternFile", prompt)
-                if resp:
-                    logging.info(f"Weaviate found pattern: {resp[0].properties.get('path')}")
-                    pattern_name = Path(resp[0].properties["path"]).parent.name
-                else:
-                    pattern_name = "general"
+    pattern_name, prompt = await _grep_pattern(pattern_dir, pattern_name, prompt)
+    if pattern_name == "weaviate":
+        resp = await ai_utils.call_weaviate(weaviate_host, weaviate_port, weaviate_grpc_host, weaviate_grpc_port, "PatternFile", prompt)
+        if resp:
+            logging.info(f"Weaviate found pattern: {resp[0].properties.get('path')}")
+            pattern_name = Path(resp[0].properties["path"]).parent.name
+        else:
+            pattern_name = "general"
 
-            try:
-                pattern_content = pattern.get_pattern(pattern_dir, pattern_name)
-            except Exception as e:
-                yield f"Failed to get pattern: {e}"
-                return
+    try:
+        pattern_content = pattern.get_pattern(pattern_dir, pattern_name)
+    except Exception as e:
+        return PlainTextResponse(content=f"Failed to get pattern: {e}")
 
-            markdown_file_content = ""
-            if markdown_path:
-                if markdown_path == "weaviate":
-                    resp = await ai_utils.call_weaviate(
-                        weaviate_host,
-                        weaviate_port,
-                        weaviate_grpc_host,
-                        weaviate_grpc_port,
-                        "ObsidianFile",
-                        prompt,
-                        5,
-                    )
-                    for obj in resp:
-                        weaviate_path = str(obj.properties["path"]).removeprefix(base_path + "/")
-                        logging.info(f"Weaviate found markdown: {weaviate_path}")
-                        markdown_path = weaviate_path
-                        markdown_file_content += f"{obj.properties['content']}\n\n"
-                else:
-                    markdown_file_content = await _read_file(f"{base_path}/{markdown_path}")
-
-            if markdown_file_content:
-                # strip metadata
-                markdown_file_content = re.sub(_METADATA_REGEX, "", markdown_file_content)
-                markdown_file_content = f"Journal File: {markdown_path}\n\n{markdown_file_content}"
-
-            logging.info(f"Used pattern: {pattern_name}")
-            if pattern_name.endswith("prompt"):
-                pattern_content = await pattern.generate_pattern_from_prompt(pattern_content, body.model, prompt, markdown_file_content)
-
-            # Launch the long-running AI call as a background task
-            task = asyncio.create_task(
-                ai_utils.complete(
-                    pattern_name,
-                    pattern_content,
-                    markdown_file_content,
-                    prompt,
-                    body.model,
-                    with_mcp,
-                    weaviate_host,
-                    weaviate_port,
-                    weaviate_grpc_host,
-                    weaviate_grpc_port,
-                )
+    markdown_file_content = ""
+    if markdown_path:
+        if markdown_path == "weaviate":
+            resp = await ai_utils.call_weaviate(
+                weaviate_host,
+                weaviate_port,
+                weaviate_grpc_host,
+                weaviate_grpc_port,
+                "ObsidianFile",
+                prompt,
+                5,
             )
+            for obj in resp:
+                weaviate_path = str(obj.properties["path"]).removeprefix(base_path + "/")
+                logging.info(f"Weaviate found markdown: {weaviate_path}")
+                markdown_path = weaviate_path
+                markdown_file_content += f"{obj.properties['content']}\n\n"
+        else:
+            markdown_file_content = await _read_file(f"{base_path}/{markdown_path}")
 
-            # Yield heartbeats while the task is running
-            while not task.done():
-                # Yield a whitespace chunk to keep the connection alive
-                yield b" "
-                try:
-                    await asyncio.wait_for(asyncio.shield(task), timeout=10)
-                except asyncio.TimeoutError:
-                    continue
+    if markdown_file_content:
+        # strip metadata
+        markdown_file_content = re.sub(_METADATA_REGEX, "", markdown_file_content)
+        markdown_file_content = f"Journal File: {markdown_path}\n\n{markdown_file_content}"
 
-            # Task completed, get the result
-            llm_response, metadata = task.result()
+    logging.info(f"Used pattern: {pattern_name}")
+    if pattern_name.endswith("prompt"):
+        pattern_content = await pattern.generate_pattern_from_prompt(pattern_content, body.model, prompt, markdown_file_content)
 
-            metadata_str = ""
-            for k, v in metadata.items():
-                metadata_str += f"{k}: {v}\n"
-            llm_resp_with_metadata = f"""---\n{metadata_str}---\n{llm_response}"""
-            yield llm_resp_with_metadata.encode("utf-8")
+    try:
+        llm_response, metadata = await ai_utils.complete(
+            pattern_name,
+            pattern_content,
+            markdown_file_content,
+            prompt,
+            body.model,
+            with_mcp,
+            weaviate_host,
+            weaviate_port,
+            weaviate_grpc_host,
+            weaviate_grpc_port,
+        )
 
-        except Exception as e:
-            msg = f"Error in {e}"
-            logging.error(msg, exc_info=True)
-            yield msg.encode("utf-8")
-        finally:
-            if task and not task.done():
-                task.cancel()
-
-    return StreamingResponse(
-        _stream_completion(),
-        media_type="text/plain",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",
-        }
-    )
-
+        metadata_str = ""
+        for k, v in metadata.items():
+            metadata_str += f"{k}: {v}\n"
+        return PlainTextResponse(content=f"""---\n{metadata_str}---\n{llm_response}""")
+    except Exception as e:
+        msg = f"Error in {e}"
+        logging.error(msg, exc_info=True)
+        return PlainTextResponse(content=msg)
 
 async def _grep_pattern(pattern_dir: str | Any, pattern_name: str, prompt: str) -> tuple[str, str]:
     if pattern_name == "grep":
@@ -408,6 +370,7 @@ async def add_cors_headers(request: Request, call_next):
 
 if __name__ == "__main__":
     import uvicorn
+    # Configured for proxy: disable keep-alive timeout, trust forwarded headers
     uvicorn.run(
         app,
         host="0.0.0.0",
