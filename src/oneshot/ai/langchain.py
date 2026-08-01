@@ -17,6 +17,7 @@ from langchain_mcp_adapters.client import MultiServerMCPClient
 from langchain_mcp_adapters.callbacks import CallbackContext
 from langchain.chat_models import init_chat_model, BaseChatModel
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_anthropic import ChatAnthropic
 from . import ai_utils
 from ..message_queue import q
 
@@ -86,7 +87,7 @@ async def call_ai(model: str, pattern: str, prompt: str) -> tuple[str, int, int]
     _validate_token_count(llm, messages, MAX_INPUT_TOKENS_CLI)
 
     try:
-        response = llm.invoke(messages)
+        response = await llm.ainvoke(messages)
     except Exception as e:
         msg = f"Failed to call LLM: {e}"
         logging.error(msg, exc_info=True)
@@ -182,8 +183,10 @@ def _create_llm(model: str, max_output_tokens: int) -> BaseChatModel:
             reasoning_budget=16384,
             chat_template_kwargs={"enable_thinking":True},
         )
-        if max_output_tokens > 0:
-            ret.max_tokens = max_output_tokens
+    elif model.startswith("claude-fable"):
+        ret = ChatAnthropic(
+            model=model,
+        )
     else:
         ret = init_chat_model(model)
         if max_output_tokens > 0:

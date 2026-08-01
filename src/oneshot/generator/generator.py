@@ -55,9 +55,13 @@ def _write_file(content: str, path: str) -> bool:
     """Write content to disk at the given relative path. Returns True on success."""
     if content and path:
         full_path = Path(f"{os.curdir}/{path}")
-        full_path.parent.mkdir(parents=True, exist_ok=True)
-        full_path.write_text(content.strip())
         logging.info(f"Writing: {full_path}")
+        try:
+            full_path.parent.mkdir(parents=True, exist_ok=True)
+            full_path.write_text(content.strip())
+        except FileExistsError as e:
+            logging.error(f"Failed to write: {full_path}: {e}")
+            return False
         return True
     else:
         return False
@@ -67,8 +71,12 @@ def _delete_file(path: str) -> bool:
     """Delete the file at the given relative path. Returns True on success."""
     full_path = Path(f"{os.curdir}/{path}")
     try:
-        full_path.unlink()
         logging.info(f"Deleting file: {full_path}")
+        try:
+            full_path.unlink()
+        except FileNotFoundError as e:
+            logging.error(f"Failed to delete: {full_path}: {e}")
+            return False
         return True
     except FileNotFoundError:
         logging.warning(f"Failed to delete: {full_path}")

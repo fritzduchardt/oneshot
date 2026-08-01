@@ -1,11 +1,11 @@
 {% macro general() %}
 - Make sure not to add trailing white spaces to lines
 - When changing existing file (those with FILENAME information):
-    - Ensure that output also contains FILENAME information.
+    - Ensure that output also contains FILENAME information. Replace spaces in filename with dashes.
     - Only return files that where changed but then return entire changed file, including the parts that have not changed.
     - If files are meant for deletion, write as first line "FILENAME: DELETE path/to/file". Don't add any content.
-    - FILENAME information always is first line, e.g.
-          FILENAME: path/to/file.md
+    - FILENAME information always is first line. File name never contains spaces, e.g.
+          FILENAME: path/to/this-is-the-file.md
         Actual file content goes here
 - Answer in same language as question was asked. If hard to tell, default to English.
 - Date format: dd.MM.yyyy, e.g. 01.12.2035

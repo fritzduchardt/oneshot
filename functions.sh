@@ -16,6 +16,11 @@ ai() {
   PYTHONPATH=$OS_SCRIPT_DIR python3 -m src.oneshot.cli shoot "$@"
 }
 
+ais() {
+  activate_oneshot_env
+  PYTHONPATH=$OS_SCRIPT_DIR python3 -m src.oneshot.cli shoot -s "$@"
+}
+
 aim() {
   activate_oneshot_env
   PYTHONPATH=$OS_SCRIPT_DIR python3 -m src.oneshot.cli shoot -o -s "$@"
