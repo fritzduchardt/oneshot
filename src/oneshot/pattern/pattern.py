@@ -95,7 +95,7 @@ def create_complete_pattern(model: str, pattern_name: str, pattern: str) -> str:
     return f"""
 Current Model: {model}
 Current Pattern: {pattern_name}
-Todays Date and Time: {dates.datetime_to_string(datetime.now())}
+Current Date and Time: {dates.datetime_to_string(datetime.now())}
 Current Directory: {os.curdir}
 Current User / Me: {os.getenv("ME")}
 {pattern}

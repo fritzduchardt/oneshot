@@ -17,6 +17,7 @@ from langchain_mcp_adapters.client import MultiServerMCPClient
 from langchain_mcp_adapters.callbacks import CallbackContext
 from langchain.chat_models import init_chat_model, BaseChatModel
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_deepseek import ChatDeepSeek
 from langchain_anthropic import ChatAnthropic
 from . import ai_utils
 from ..message_queue import q
@@ -81,7 +82,7 @@ client = MultiServerMCPClient(
 
 async def call_ai(model: str, pattern: str, prompt: str) -> tuple[str, int, int]:
     logging.info("Calling AI without tools")
-    llm = _create_llm(model, MAX_OUTPUT_TOKENS_CLI)
+    llm = _create_model(model, MAX_OUTPUT_TOKENS_CLI)
     messages = _create_messages(pattern, prompt)
 
     _validate_token_count(llm, messages, MAX_INPUT_TOKENS_CLI)
@@ -103,7 +104,7 @@ async def call_ai(model: str, pattern: str, prompt: str) -> tuple[str, int, int]
 async def call_ai_with_tools(model: str, pattern: str, prompt: str) -> tuple[str, int, int]:
     try:
         available_tools = await _get_cached_tools()
-        llm = _create_llm(model, MAX_OUTPUT_TOKENS_MCP)
+        llm = _create_model(model, MAX_OUTPUT_TOKENS_MCP)
         messages = _create_messages(pattern, prompt)
 
         agent = create_agent(
@@ -114,9 +115,11 @@ async def call_ai_with_tools(model: str, pattern: str, prompt: str) -> tuple[str
         logging.info(f"Available tools: {available_tools}")
         # noinspection PyTypeChecker
         response = await agent.ainvoke({"messages": messages})
-        logging.info(f"Input tokens: {response.usage_metadata["input_tokens"]}")
-        logging.info(f"Output tokens: {response.usage_metadata["output_tokens"]}")
-        return response["messages"][-1].text, response['messages'][-1].usage_metadata['input_tokens'], response['messages'][-1].usage_metadata['output_tokens']
+        last_message = response["messages"][-1]
+        logging.info(f"Input tokens: {last_message.usage_metadata["input_tokens"]}")
+        logging.info(f"Output tokens: {last_message.usage_metadata["output_tokens"]}")
+        text = last_message.text if last_message.text else last_message.content
+        return text, last_message.usage_metadata['input_tokens'], last_message.usage_metadata['output_tokens']
     except Exception as e:
         logging.exception(f"Failure to call MCP Server or LLM: {e}")
         return "Failed on call to MCP Server and / or LLM. Check logs", -1, -1
@@ -126,7 +129,7 @@ async def call_ai_only_tools(model: str, pattern_content: str, prompt: str, tool
     try:
         available_tools = await _get_cached_tools()
         logging.info(f"Available tools: {available_tools}")
-        llm = _create_llm(model, MAX_OUTPUT_TOKENS_MCP)
+        llm = _create_model(model, MAX_OUTPUT_TOKENS_MCP)
         # bind only the requested tool so the llm is forced to call it
         matching_tools = [tool for tool in available_tools if tool.name == tool_name]
         llm_with_tools = llm.bind_tools(matching_tools)
@@ -165,7 +168,7 @@ def _validate_token_count(llm, messages, token_count) -> None:
         )
 
 
-def _create_llm(model: str, max_output_tokens: int) -> BaseChatModel:
+def _create_model(model: str, max_output_tokens: int) -> BaseChatModel:
     ret: BaseChatModel
     if model.startswith("gemini"):
         ret = ChatGoogleGenerativeAI(
@@ -183,8 +186,12 @@ def _create_llm(model: str, max_output_tokens: int) -> BaseChatModel:
             reasoning_budget=16384,
             chat_template_kwargs={"enable_thinking":True},
         )
-    elif model.startswith("claude-fable"):
+    elif model.startswith("claude"):
         ret = ChatAnthropic(
+            model=model,
+        )
+    elif model.startswith("deepseek"):
+        ret = ChatDeepSeek(
             model=model,
         )
     else:

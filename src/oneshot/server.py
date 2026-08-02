@@ -164,7 +164,7 @@ async def completion(body: CompletionRequest):
         else:
             markdown_file_content = await _read_file(f"{base_path}/{markdown_path}")
 
-    if markdown_file_content:
+    if markdown_file_content and markdown_file_content != "None":
         # strip metadata
         markdown_file_content = re.sub(_METADATA_REGEX, "", markdown_file_content)
         markdown_file_content = f"Journal File: {markdown_path}\n\n{markdown_file_content}"
