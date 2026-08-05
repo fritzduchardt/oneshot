@@ -3,7 +3,7 @@ import os
 import re
 from pathlib import Path
 
-from src.oneshot.ai.ai_utils import clean_llm_response
+from src.oneshot.ai import ai_cleanup
 
 
 def write_to_disk(content: str) -> None:
@@ -16,7 +16,7 @@ def write_to_disk(content: str) -> None:
         if match:
             # Before handling a new FILENAME marker, flush any pending file content to disk
             if file_path:
-                file_content = clean_llm_response(file_content)
+                file_content = ai_cleanup.clean_llm_response(file_content)
                 _write_file(file_content, file_path)
                 file_path = ""
                 file_content = ""

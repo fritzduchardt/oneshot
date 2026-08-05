@@ -11,7 +11,7 @@ from rich.markdown import Markdown
 
 from dotenv import load_dotenv
 
-from .ai import ai_utils
+from .ai import ai_utils, ai_cleanup
 from .collector import collector as c
 from .generator import generator
 from .pattern import pattern as p
@@ -96,6 +96,7 @@ def shoot_cmd(
         generator.write_to_disk(llm_resp)
     else:
         encoding = sys.stdout.encoding or "utf-8"
+        llm_resp = ai_cleanup.clean_llm_response(llm_resp)
         sys.stdout.buffer.write(llm_resp.encode(encoding, "replace"))
 
 @oneshot.command(name="collect")

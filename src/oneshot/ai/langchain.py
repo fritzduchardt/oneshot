@@ -93,7 +93,6 @@ async def call_ai(model: str, pattern: str, prompt: str) -> tuple[str, int, int]
         logging.error(msg, exc_info=True)
         return msg, 0 , 0
     response_text = response.text.strip()
-    response_text = ai_cleanup.clean_llm_response(response_text)
     logging.info(f"Input tokens: {response.usage_metadata["input_tokens"]}")
     logging.info(f"Output tokens: {response.usage_metadata["output_tokens"]}")
     logging.debug(f"Clean LLM response:\n{response_text}")
