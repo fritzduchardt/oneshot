@@ -185,67 +185,6 @@ def get_model(model: str) -> Any:
         raise ValueError(f"Unsupported model: {model}")
 
 
-def clean_llm_response(response: str | None) -> str:
-    """Clean raw LLM output and return a trimmed, balanced result."""
-    if response is None:
-        return ""
-
-    text = response.strip()
-    if not text:
-        return ""
-
-    text = _remove_filename_lines(text)
-    text = _remove_code_block_wrapper(text)
-    text = _balance_square_brackets(text)
-
-    return text.strip()
-
-
-def _remove_filename_lines(text: str) -> str:
-    """Remove metadata lines starting with FILENAME:."""
-    lines = [
-        line for line in text.splitlines()
-        if not line.lstrip().startswith("FILENAME:")
-    ]
-    return "\n".join(lines).strip()
-
-
-def _remove_code_block_wrapper(text: str) -> str:
-    """Remove surrounding triple-backtick code fences from a response."""
-    if not text.startswith("```"):
-        return text
-
-    first_newline = text.find("\n")
-    if first_newline == -1:
-        return "" if text.endswith("```") else text
-
-    closing_fence = text.rfind("```")
-    if closing_fence > first_newline:
-        return text[first_newline + 1:closing_fence].strip()
-
-    return text[first_newline + 1:].strip()
-
-
-def _balance_square_brackets(text: str) -> str:
-    """Complete or trim trailing square brackets on truncated JSON arrays."""
-    if not text.startswith("["):
-        return text
-
-    open_count = text.count("[")
-    close_count = text.count("]")
-    if open_count > close_count:
-        text += "]" * (open_count - close_count)
-    elif close_count > open_count:
-        excess = close_count - open_count
-        for _ in range(excess):
-            if text.endswith("]"):
-                text = text[:-1]
-            else:
-                break
-
-    return text
-
-
 def calculate_ai_cost(model: str, input_tokens: int, output_tokens: int) -> str:
     """Calculate the costs in USD for using a given AI model with provided token counts.
 

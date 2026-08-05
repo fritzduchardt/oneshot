@@ -1,4 +1,4 @@
-from src.oneshot.ai.ai_utils import clean_llm_response
+from src.oneshot.ai.ai_cleanup import clean_llm_response
 import pytest
 
 def test_clean_llm_response_removes_starting_code_block():
@@ -46,6 +46,12 @@ def test_clean_llm_response_only_opening_marker_no_trailing():
     assert result == "some code here"
 
 
+def test_clean_llm_response_only_trailing_marker_no_opening_one_line():
+    # Only trailing marker present, no opening ``` - trailing should be removed but nothing else
+    response = "some code here```"
+    result = clean_llm_response(response)
+    assert result == "some code here"
+
 def test_clean_llm_response_only_trailing_marker_no_opening():
     # Only trailing marker present, no opening ``` - trailing should be removed but nothing else
     response = "some code here\n```"
@@ -58,3 +64,15 @@ def test_clean_llm_response_sql_language_marker():
     response = "```sql\nSELECT * FROM table;\n```"
     result = clean_llm_response(response)
     assert result == "SELECT * FROM table;"
+
+def test_clean_llm_response_with_filename():
+    # Ensure other language markers are also stripped correctly
+    response = "FILENAME: test.py\nsome-content"
+    result = clean_llm_response(response)
+    assert result == "FILENAME: test.py\nsome-content"
+
+def test_clean_llm_response_with_filename_and_language_marker():
+    # Ensure other language markers are also stripped correctly
+    response = "FILENAME: test.py\n```\nsome-content\n```"
+    result = clean_llm_response(response)
+    assert result == "FILENAME: test.py\nsome-content"
