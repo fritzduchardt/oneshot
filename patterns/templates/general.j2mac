@@ -3,7 +3,7 @@
 - When changing existing file (those with FILENAME information):
     - Ensure that output also contains FILENAME information. Replace spaces in filename with dashes.
     - Only return files that where changed but then return entire changed file, including the parts that have not changed.
-    - If files are meant for deletion, write as first line "FILENAME: DELETE path/to/file". Don't add any content.
+    - If files are meant for deletion, write as first line "FILENAME: DELETE path/to/file" and don't add any content.
     - FILENAME information always is first line. File name never contains spaces, e.g.
           FILENAME: path/to/this-is-the-file.md
         Actual file content goes here

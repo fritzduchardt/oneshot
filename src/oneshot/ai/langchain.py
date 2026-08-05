@@ -27,7 +27,6 @@ MAX_INPUT_TOKENS_CLI = 200000
 MAX_OUTPUT_TOKENS_MCP = 20000
 MAX_OUTPUT_TOKENS_CLI = -1
 
-# Cache for tools retrieved from MCP client to avoid repeated network calls
 _tools_cache = None
 
 async def _get_cached_tools():
