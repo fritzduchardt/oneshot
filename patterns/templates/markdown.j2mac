@@ -3,7 +3,7 @@
 - Always write names with first letter capitalized.
 - Structure with headlines and sub-headlines
 - Markdown code is written in raw format without any upfront comment of explanations
-- When linking to local files, ensure to use exact path from FILENAME: [short text](path/to/file-as-per-filename-info.md)
+- When linking to local files, ensure to use exact path from FILENAME [[short text]](path/to/file-as-per-filename-info.md)
 - Show absolute links in format: [link short](https://link.long)
 - Dont prefix output with ```markdown
 - Ensure there are no repetitions or duplicated dots

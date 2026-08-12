@@ -45,7 +45,7 @@ def write_to_disk(content: str) -> None:
 
     # Flush the last file after loop
     if file_path:
-        file_content = clean_llm_response(file_content)
+        file_content = ai_cleanup.clean_llm_response(file_content)
         _write_file(file_content, file_path)
     elif file_content.strip():
         logging.warning(f"No file path for: {file_content.strip()}")
