@@ -7,7 +7,7 @@ from pathlib import Path
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 
-from ..ai import ai_utils
+from ..ai import ai_utils, ai_cleanup
 from ..message_queue import q
 from ..utils import dates
 
@@ -119,7 +119,7 @@ async def generate_pattern_from_prompt(
         str_output = StrOutputParser()
         chain = prompt_template | ai_utils.get_model(prompt_model) | str_output
         # Use async invoke for the chain
-        generated_prompt = ai_utils.clean_llm_response(await chain.ainvoke({"md": create_complete_prompt(prompt, markdown_content)}))
+        generated_prompt = ai_cleanup.clean_llm_response(await chain.ainvoke({"md": create_complete_prompt(prompt, markdown_content)}))
         generated_prompt_and_metadata = f"""
         ---
         model: {prompt_model}

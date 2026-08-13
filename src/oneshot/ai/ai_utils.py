@@ -190,7 +190,7 @@ def calculate_ai_cost(model: str, input_tokens: int, output_tokens: int) -> str:
 
     Pricing is based on publicly published rates per million tokens for input and output.
     Supports models from Gemini, Anthropic, OpenAI, DeepSeek, and Grok (xAI).
-    Raises ValueError if the model is unknown or unsupported.
+    Raises ValueError if the mdevops: can I format text in text areas with HTML or cssodel is unknown or unsupported.
     """
     input_cost_per_million, output_cost_per_million = _get_model_pricing(model)
     if input_cost_per_million < 0 or input_tokens < 0:

@@ -19,7 +19,7 @@ from langchain.chat_models import init_chat_model, BaseChatModel
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_deepseek import ChatDeepSeek
 from langchain_anthropic import ChatAnthropic
-from . import ai_utils, ai_cleanup
+from . import ai_utils
 from ..message_queue import q
 
 MAX_INPUT_TOKENS_MCP = 20000
