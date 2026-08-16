@@ -77,9 +77,15 @@ def shoot_cmd(
     if prompt:
         prompt_str = " ".join(prompt)
 
+    pattern_content = p.get_pattern(pattern_dir, pattern_name)
+    # cli add on to pattern
+    pattern_content = _add_prompt_add_on(
+        pattern_content,
+        "If the output is Markdown, don't use Obsidian callouts.",
+    )
     llm_resp, metadata = asyncio.run(ai_utils.complete(
         pattern_name,
-        p.get_pattern(pattern_dir, pattern_name),
+        pattern_content,
         stdin,
         prompt_str,
         model,
@@ -89,8 +95,8 @@ def shoot_cmd(
         weaviate_grpc_host,
         weaviate_grpc_port,
     ))
-    if metadata["costs"]:
-        logging.info(f"Costs: {metadata["costs"]}")
+    if costs := metadata.get("costs"):
+        logging.info(f"Costs: {costs}")
 
     if output_to_disk:
         generator.write_to_disk(llm_resp)
@@ -98,6 +104,16 @@ def shoot_cmd(
         encoding = sys.stdout.encoding or "utf-8"
         llm_resp = ai_cleanup.clean_llm_response(llm_resp)
         sys.stdout.buffer.write(llm_resp.encode(encoding, "replace"))
+
+
+def _add_prompt_add_on(prompt: str, add_on: str) -> str:
+    """Add additional information to the prompt before passing it to the AI."""
+    if not add_on:
+        return prompt
+    if prompt:
+        return f"{prompt}\n\n{add_on}"
+    return add_on
+
 
 @oneshot.command(name="collect")
 def collect_cmd(

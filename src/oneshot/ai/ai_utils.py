@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from typing import Any
 
 import weaviate
@@ -23,6 +24,7 @@ async def complete(pattern_name: str, pattern_content: str, stdin: str, prompt: 
     logging.info(f"Calling model: {model}")
     logging.info(f"Using pattern: {pattern_name}")
     metadata = {"pattern": pattern_name, "model": model}
+    before = datetime.now()
     if with_mcp:
         llm_resp, input_tokens, output_tokens = await lc.call_ai_with_tools(model, p.create_complete_pattern(model, pattern_name, pattern_content), p.create_complete_prompt(prompt, stdin))
         metadata["mcp"] = "true"
@@ -32,6 +34,9 @@ async def complete(pattern_name: str, pattern_content: str, stdin: str, prompt: 
     costs = calculate_ai_cost(model, input_tokens, output_tokens)
     if costs:
         metadata["costs"] = costs
+    duration_seconds = (datetime.now() - before).seconds
+    logging.info(f"Duration: {duration_seconds}s")
+    metadata["duration"] = str(duration_seconds)
 
     return llm_resp, metadata
 
@@ -209,6 +214,7 @@ def _get_model_pricing(model: str) -> tuple[float, float]:
         "gemini-3.1-pro-preview": (4.0, 12.0),
         "gemini-3.5-flash": (1.5, 7.5),
         "gemini-3.6-flash": (1.5, 7.5),
+        "gemini-3.7-flash": (1.5, 7.5),
         # openai
         "gpt-5.6-sol": (5, 30.0),
         "gpt-5.6-terra": (2.5, 15.0),

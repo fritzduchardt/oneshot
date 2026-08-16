@@ -18,7 +18,7 @@ ai() {
 
 ais() {
   activate_oneshot_env
-  PYTHONPATH=$OS_SCRIPT_DIR python3 -m src.oneshot.cli shoot -s "$@"
+  PYTHONPATH=$OS_SCRIPT_DIR python3 -m src.oneshot.cli shoot -s "$@" | os md
 }
 
 aim() {
@@ -75,9 +75,10 @@ collect() {
 # pattern generator
 generate() {
   activate_oneshot_env
+  pattern_templates_dir="${OS_PATTERN_TEMPLATE_DIR:-"$HOME"/projects/github/oneshot/patterns}"
   PYTHONPATH=$OS_SCRIPT_DIR python3 -m src.oneshot.cli patterns generate \
       -o "$HOME"/.config/fabric/patterns \
-      -t "$HOME"/projects/github/oneshot/patterns \
+      -t "$pattern_templates_dir" \
       "$@"
 }
 
@@ -123,7 +124,7 @@ model_grok() {
 }
 
 model_gemini_flash() {
-  export DEFAULT_MODEL=gemini-3.6-flash
+  export DEFAULT_MODEL=gemini-3.7-flash
 }
 
 model_gemini_pro() {
@@ -136,6 +137,10 @@ model_deepseek_flash() {
 
 model_deepseek_pro() {
   export DEFAULT_MODEL=deepseek-v4-pro
+}
+
+model_openrouter_qwen() {
+  export DEFAULT_MODEL=qwen/qwen3.7-flash
 }
 
 model() {

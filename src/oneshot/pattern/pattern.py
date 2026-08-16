@@ -128,6 +128,7 @@ async def generate_pattern_from_prompt(
         {generated_prompt}
         """
         data = {
+            "type": "prompt",
             "message": generated_prompt_and_metadata,
         }
         q.put(data)

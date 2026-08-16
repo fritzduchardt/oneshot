@@ -19,6 +19,7 @@ from langchain.chat_models import init_chat_model, BaseChatModel
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_deepseek import ChatDeepSeek
 from langchain_anthropic import ChatAnthropic
+from langchain_openai import ChatOpenAI
 from . import ai_utils
 from ..message_queue import q
 
@@ -28,6 +29,7 @@ MAX_OUTPUT_TOKENS_MCP = 20000
 MAX_OUTPUT_TOKENS_CLI = -1
 
 _tools_cache = None
+
 
 async def _get_cached_tools():
     """Return cached tools or fetch and cache them."""
@@ -192,10 +194,16 @@ def _create_model(model: str, max_output_tokens: int) -> BaseChatModel:
         ret = ChatDeepSeek(
             model=model,
         )
+    # Added support for OpenRouter models
     else:
-        ret = init_chat_model(model)
+        ret = ChatOpenAI(
+            model=model,
+            api_key=os.environ.get("OPENROUTER_API_KEY"),
+            base_url="https://openrouter.ai/api/v1",
+        )
         if max_output_tokens > 0:
             ret.max_tokens = max_output_tokens
+
     return ret
 
 
