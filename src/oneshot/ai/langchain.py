@@ -11,6 +11,8 @@ warnings.filterwarnings(
     category=UserWarning,
     module=r"langchain_core\._api\.deprecation",
 )
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("google_genai.models").setLevel(logging.WARNING)
 
 from langchain.agents import create_agent
 from langchain_mcp_adapters.client import MultiServerMCPClient
@@ -112,7 +114,8 @@ async def call_ai_with_tools(model: str, pattern: str, prompt: str) -> tuple[str
             tools=available_tools,
         )
 
-        logging.info(f"Available tools: {available_tools}")
+        logging.info("Calling AI with tools")
+        logging.info(f"Available tools: {[tool.name for tool in available_tools]}")
         # noinspection PyTypeChecker
         response = await agent.ainvoke({"messages": messages})
         last_message = response["messages"][-1]
@@ -128,7 +131,8 @@ async def call_ai_with_tools(model: str, pattern: str, prompt: str) -> tuple[str
 async def call_ai_only_tools(model: str, pattern_content: str, prompt: str, tool_name: str) -> str | None:
     try:
         available_tools = await _get_cached_tools()
-        logging.info(f"Available tools: {available_tools}")
+        logging.info("Calling AI with tools only")
+        logging.info(f"Available tools: {[tool.name for tool in available_tools]}")
         llm = _create_model(model, MAX_OUTPUT_TOKENS_MCP)
         # bind only the requested tool so the llm is forced to call it
         matching_tools = [tool for tool in available_tools if tool.name == tool_name]

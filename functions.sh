@@ -84,11 +84,11 @@ generate() {
 
 # configuration
 model_claude() {
-  export DEFAULT_MODEL=claude-sonnet-4-6
+  export DEFAULT_MODEL=claude-sonnet-5
 }
 
 model_claude_opus() {
-  export DEFAULT_MODEL=claude-opus-4-8
+  export DEFAULT_MODEL=claude-opus-5
 }
 
 model_claude_fable() {
@@ -96,7 +96,7 @@ model_claude_fable() {
 }
 
 model_claude_haiku() {
-  export DEFAULT_MODEL=claude-haiku-4-5-20251001
+  export DEFAULT_MODEL=claude-haiku-5
 }
 
 model_gpt5_sol() {
@@ -124,7 +124,7 @@ model_grok() {
 }
 
 model_gemini_flash() {
-  export DEFAULT_MODEL=gemini-3.7-flash
+  export DEFAULT_MODEL=gemini-3.8-flash
 }
 
 model_gemini_pro() {
@@ -142,6 +142,23 @@ model_deepseek_pro() {
 model_openrouter_qwen() {
   export DEFAULT_MODEL=qwen/qwen3.7-flash
 }
+
+model_openrouter_mercury() {
+  export DEFAULT_MODEL=inception/mercury-2.5:nitro
+}
+
+model_openrouter_oss() {
+  export DEFAULT_MODEL=openai/gpt-oss-120b:nitro
+}
+
+model_openrouter_solar() {
+  export DEFAULT_MODEL=upstage/solar-pro4
+}
+
+model_openrouter_gpt_oss() {
+  export DEFAULT_MODEL=openai/gpt-oss-120b
+}
+
 
 model() {
   echo $DEFAULT_MODEL

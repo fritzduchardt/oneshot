@@ -9,4 +9,5 @@
 - Add type definitions
 - Add two empty lines between functions
 - Place private functions underneath the methods that use them
+- Ensure that function and file names are snake cased
 {% endmacro %}

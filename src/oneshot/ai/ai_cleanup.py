@@ -24,6 +24,10 @@ def clean_llm_response(response: str | None) -> str:
     if _TRAILING_TICKS.search(text):
         text = _TRAILING_TICKS.sub("", text, count=1)
     # normalize brackets
+    if text.endswith("] ]") or text.endswith("]]"):
+        text = text[:-1].strip()
+    if text.startswith("[ [") or text.startswith("[["):
+        text = text[:-1].strip()
     if text.startswith("[") or text.endswith("]"):
         if not text.startswith("["):
             text = f"[{text}"

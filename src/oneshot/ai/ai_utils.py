@@ -12,9 +12,11 @@ from weaviate.collections.classes.internal import Object
 from weaviate.connect import ConnectionParams
 
 from . import anthropic_utils as anthropic, nvidia_utils
-from . import deepseek_utils, gemini_utils, openai_utils, xai_utils
+from . import deepseek_utils, gemini_utils, openai_utils, openrouter_utils, xai_utils
 from . import langchain as lc
 from ..pattern import pattern as p
+
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 
 async def complete(pattern_name: str, pattern_content: str, stdin: str, prompt: str, model: str, with_mcp: bool, weaviate_host: str, weaviate_port: int, weaviate_grpc_host: str, weaviate_grpc_port: int) -> tuple[str, dict]:
@@ -35,8 +37,10 @@ async def complete(pattern_name: str, pattern_content: str, stdin: str, prompt: 
     if costs:
         metadata["costs"] = costs
     duration_seconds = (datetime.now() - before).seconds
-    logging.info(f"Duration: {duration_seconds}s")
-    metadata["duration"] = str(duration_seconds)
+    if duration_seconds:
+        tks = round(output_tokens / duration_seconds, 3)
+        logging.info(f"Duration: {duration_seconds}s, TPC: {tks}")
+        metadata["duration"] = f"total: {duration_seconds}s, tpc: {tks}ks"
 
     return llm_resp, metadata
 
@@ -78,6 +82,7 @@ def list_models() -> list[str]:
     models.extend(xai_utils.list_models())
     models.extend(gemini_utils.list_models())
     models.extend(deepseek_utils.list_models())
+    models.extend(openrouter_utils.list_models())
     models.extend(nvidia_utils.list_models())
     filter_prefixes = [
         "gpt-5",
@@ -85,7 +90,8 @@ def list_models() -> list[str]:
         "grok-4",
         "gemini-3",
         "deepseek",
-        "stepfun",
+        "inception",
+        "openai",
     ]
     blacklisted_words = [
         "gpt-5.1",
@@ -97,7 +103,6 @@ def list_models() -> list[str]:
         "-chat",
         "-mini",
         "-nano",
-        "-codex",
         "2025",
         "2026",
         "claude-opus-4",
@@ -110,6 +115,8 @@ def list_models() -> list[str]:
         "gemini-3.1",
         "gemini-3.5",
         "gemini-3-",
+        "video",
+        "image",
     ]
 
     filtered_models = [m for m in models if m.strip().startswith(tuple(filter_prefixes))]
@@ -195,7 +202,7 @@ def calculate_ai_cost(model: str, input_tokens: int, output_tokens: int) -> str:
 
     Pricing is based on publicly published rates per million tokens for input and output.
     Supports models from Gemini, Anthropic, OpenAI, DeepSeek, and Grok (xAI).
-    Raises ValueError if the mdevops: can I format text in text areas with HTML or cssodel is unknown or unsupported.
+    Raises ValueError if the model name is unknown or unsupported.
     """
     input_cost_per_million, output_cost_per_million = _get_model_pricing(model)
     if input_cost_per_million < 0 or input_tokens < 0:
