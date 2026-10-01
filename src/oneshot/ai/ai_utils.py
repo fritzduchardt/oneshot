@@ -121,7 +121,7 @@ def list_models() -> list[str]:
 
     filtered_models = [m for m in models if m.strip().startswith(tuple(filter_prefixes))]
     filtered_models = [m for m in filtered_models if not any(word in m for word in blacklisted_words)]
-    return filtered_models
+    return models
 
 
 def count_tokens(text: str) -> int:

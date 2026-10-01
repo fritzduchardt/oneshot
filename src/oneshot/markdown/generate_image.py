@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import io
 import logging
 import os
@@ -17,10 +18,8 @@ from ..ai.ai_utils import get_model
 from ..message_queue import q
 from ..pattern import pattern
 
-# imagen-4.0-ultra-generate-001
-# imagen-4.0-generate-001
-# imagen-4.0-fast-generate-001
-IMAGE_MODEL_NAME = os.getenv("IMAGE_MODEL", "imagen-4.0-ultra-generate-001")
+
+IMAGE_MODEL_NAME = os.getenv("IMAGE_MODEL", "gemini-3.1-flash-lite-image")
 IMAGE_PROMPT_MODEL_NAME = os.getenv("IMAGE_PROMPT_MODEL", "deepseek-v4-flash")
 
 _image_executor = ThreadPoolExecutor(max_workers=4)
@@ -88,22 +87,15 @@ async def generate_image(
         image_prompt = await chain.ainvoke({"md": md})
         logging.info(f"Generating image: {image} with {IMAGE_MODEL_NAME}")
         client = _get_genai_client()
+
         response = await asyncio.to_thread(
-            client.models.generate_images,
+            client.interactions.create,
             model=IMAGE_MODEL_NAME,
-            prompt=image_prompt,
-            config=types.GenerateImagesConfig(
-                number_of_images=1,
-                output_mime_type="image/png",
-                aspect_ratio="4:3"
-            )
+            input=image_prompt,
         )
         output_path = Path(f"{base_path}/{Path(path).parent}/{image}")
-        for generated_image in response.generated_images:
-            image_bytes: Buffer = generated_image.image.image_bytes
-            image_obj = Image.open(io.BytesIO(image_bytes))
-            await asyncio.to_thread(image_obj.save, output_path.as_posix())
-            print("Image successfully saved to disk.")
+        with open(output_path.as_posix(), "wb") as f:
+            f.write(base64.b64decode(response.output_image.data))
 
         #![](recipename-ingredients.png, e.g. lentil-patties-ingredients.png)
         msg = f"---\nmodel: {IMAGE_PROMPT_MODEL_NAME}\n---\n{image_prompt}\n\n![]({image})"
