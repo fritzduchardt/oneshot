@@ -119,8 +119,12 @@ def _add_prompt_add_on(prompt: str, add_on: str) -> str:
 def collect_cmd(
     collect_dir: str = typer.Argument(".", help="Collect directory or regex"),
     include_hidden: bool = typer.Option(False, "--hidden", "-H", help="Include hidden files in collection"),
+    read_stdin: bool = typer.Option(False, "--stdin", "-s", help="Read input from stdin"),
     num_threads: int = typer.Option(1, "--threads", "-t", help="Number of concurrent threads for operation"),
 ):
+    if read_stdin:
+        data = sys.stdin.buffer.read()
+        print(data.decode("utf-8", errors="replace"))
     collect_dir = collect_dir.lstrip("./")
     if num_threads > 1:
         logging.debug(f"Running with {num_threads} threads")
