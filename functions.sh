@@ -124,7 +124,7 @@ model_grok() {
 }
 
 model_gemini_flash() {
-  export DEFAULT_MODEL=gemini-3.8-flash
+  export DEFAULT_MODEL=gemini-3.5-flash-lite
 }
 
 model_gemini_pro() {
@@ -140,11 +140,11 @@ model_deepseek_pro() {
 }
 
 model_openrouter_qwen() {
-  export DEFAULT_MODEL=qwen/qwen3.7-flash
+  export DEFAULT_MODEL=qwen/qwen3.8-max-0902
 }
 
-model_openrouter_mercury() {
-  export DEFAULT_MODEL=inception/mercury-2.5:nitro
+model_openrouter_glm() {
+  export DEFAULT_MODEL=z-ai/glm-5.3-flash
 }
 
 model_openrouter_oss() {
@@ -164,4 +164,4 @@ model() {
   echo $DEFAULT_MODEL
 }
 
-model_deepseek_flash
+model_gemini_flash

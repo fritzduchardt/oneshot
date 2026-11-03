@@ -71,6 +71,7 @@ class TelegramSendRequest(BaseModel):
 class NotifyRequest(BaseModel):
     markdown: str
     type: str
+    id: str
 
 @app.get("/stream")
 async def stream():
@@ -94,6 +95,7 @@ async def notify(body: NotifyRequest):
     data = {
         "message": body.markdown,
         "type": body.type,
+        "id": body.id,
     }
     q.put_nowait(data)
 

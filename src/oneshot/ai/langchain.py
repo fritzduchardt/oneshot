@@ -12,7 +12,7 @@ warnings.filterwarnings(
     module=r"langchain_core\._api\.deprecation",
 )
 logging.getLogger("httpx").setLevel(logging.WARNING)
-logging.getLogger("google_genai.models").setLevel(logging.WARNING)
+logging.getLogger("google_genai.models").setLevel(logging.ERROR)
 
 from langchain.agents import create_agent
 from langchain_mcp_adapters.client import MultiServerMCPClient
@@ -67,10 +67,6 @@ async def log_handler(
 
 client = MultiServerMCPClient(
     {
-        "oneshot-mcp": {
-            "transport": "http",
-            "url": f"{os.environ.get('MCP_URL_ONESHOT')}/mcp",
-        },
         "finclaw": {
             "transport": "http",
             "url": f"{os.environ.get('MCP_URL_FINCLAW')}/mcp",
@@ -177,7 +173,6 @@ def _create_model(model: str, max_output_tokens: int) -> BaseChatModel:
     if model.startswith("gemini"):
         ret = ChatGoogleGenerativeAI(
             model=model,
-            temperature=0,
             google_api_key=os.environ.get("GOOGLE_API_KEY"),
         )
     elif model.startswith("nvidia"):

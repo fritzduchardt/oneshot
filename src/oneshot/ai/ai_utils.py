@@ -33,9 +33,6 @@ async def complete(pattern_name: str, pattern_content: str, stdin: str, prompt: 
     else:
         llm_resp, input_tokens, output_tokens = await lc.call_ai(model, p.create_complete_pattern(model, pattern_name, pattern_content), p.create_complete_prompt(prompt, stdin))
 
-    costs = calculate_ai_cost(model, input_tokens, output_tokens)
-    if costs:
-        metadata["costs"] = costs
     duration_seconds = (datetime.now() - before).seconds
     if duration_seconds:
         tks = round(output_tokens / duration_seconds, 3)
@@ -195,52 +192,3 @@ def get_model(model: str) -> Any:
         return get_xai(model)
     else:
         raise ValueError(f"Unsupported model: {model}")
-
-
-def calculate_ai_cost(model: str, input_tokens: int, output_tokens: int) -> str:
-    """Calculate the costs in USD for using a given AI model with provided token counts.
-
-    Pricing is based on publicly published rates per million tokens for input and output.
-    Supports models from Gemini, Anthropic, OpenAI, DeepSeek, and Grok (xAI).
-    Raises ValueError if the model name is unknown or unsupported.
-    """
-    input_cost_per_million, output_cost_per_million = _get_model_pricing(model)
-    if input_cost_per_million < 0 or input_tokens < 0:
-        return ""
-    costs = (input_tokens / 1_000_000) * input_cost_per_million
-    costs += (output_tokens / 1_000_000) * output_cost_per_million
-    return f"{round(costs, 4)} ({input_tokens}/{output_tokens})"
-
-
-def _get_model_pricing(model: str) -> tuple[float, float]:
-    """
-    :return: costs input tokens, output tokens
-    """
-    prices: dict[str, tuple[float, float]] = {
-        # gemini
-        "gemini-3.1-pro-preview": (4.0, 12.0),
-        "gemini-3.5-flash": (1.5, 7.5),
-        "gemini-3.6-flash": (1.5, 7.5),
-        "gemini-3.7-flash": (1.5, 7.5),
-        # openai
-        "gpt-5.6-sol": (5, 30.0),
-        "gpt-5.6-terra": (2.5, 15.0),
-        "gpt-5.6-luna": (1, 6.0),
-        # claude
-        "claude-fable": (10, 50),
-        "claude-mythos": (10, 50),
-        "claude-opus-5": (5.0, 25.0),
-        "claude-sonnet-5": (3.0, 15.0),
-        "claude-haiku": (1.0, 5.0),
-        # deepseek
-        "deepseek-v4-flash": (0.09, 0.18),
-        "deepseek-v4-pro": (0.435, 0.87),
-        # grok
-        "grok-4.3": (1.25, 2.5),
-    }
-
-    for key, (inp, out) in prices.items():
-        if model.startswith(key):
-            return inp, out
-
-    return -1, -1
