@@ -110,7 +110,7 @@ async def chart(body: ChartRequest):
         markdown_file_content = await _read_file(f"{base_path}/{body.markdown}")
         markdown_file_content = f"Journal File: {body.markdown}\n\n{markdown_file_content}"
         prompt = pattern.create_complete_prompt(prompt, markdown_file_content)
-    result = await call_ai_only_tools(body.model, pattern.create_complete_pattern(body.model, body.pattern, pattern_content), prompt, "create_chart", )
+    result = await call_ai_only_tools(body.model, pattern.create_complete_pattern(body.model, body.pattern, pattern_content), prompt, "create_finclaw_chart", )
     try:
         data = ast.literal_eval(result)
         return PlainTextResponse(content=data[0]["text"])
@@ -376,6 +376,6 @@ if __name__ == "__main__":
     uvicorn.run(
         app,
         host="0.0.0.0",
-        port=int(os.getenv("PORT", "8000")),
+        port=int(os.getenv("PORT", "7000")),
         timeout_keep_alive=_READ_TIMEOUT,
     )

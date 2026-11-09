@@ -35,9 +35,9 @@ async def complete(pattern_name: str, pattern_content: str, stdin: str, prompt: 
 
     duration_seconds = (datetime.now() - before).seconds
     if duration_seconds:
-        tks = round(output_tokens / duration_seconds, 3)
-        logging.info(f"Duration: {duration_seconds}s, TPC: {tks}")
-        metadata["duration"] = f"total: {duration_seconds}s, tpc: {tks}ks"
+        tps = round(output_tokens / duration_seconds, 3)
+        logging.info(f"Duration: {duration_seconds}s, TPS: {tps}")
+        metadata["duration"] = f"total: {duration_seconds}s, tpc: {tps}ks"
 
     return llm_resp, metadata
 
